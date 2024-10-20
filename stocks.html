@@ -23,17 +23,17 @@
 
     <div class="container mt-4">
         <h2>Available Stocks</h2>
+        <h4>Funds: ${{ balance }}</h4>
 
-        <h4>Your Balance: ${{ balance }}</h4> <!-- Display user balance -->
-
-        <table class="table">
+        <table class="table table-striped">
             <thead>
                 <tr>
                     <th>Stock ID</th>
                     <th>Company Name</th>
                     <th>Ticker</th>
                     <th>Current Price</th>
-                    <th>Shares Owned</th> <!-- New column for shares owned -->
+                    <th>Shares Owned</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -43,7 +43,20 @@
                     <td>{{ stock.company_name }}</td>
                     <td>{{ stock.ticker }}</td>
                     <td>${{ stock.current_price }}</td>
-                    <td>{{ stock.shares_owned or 0 }}</td> <!-- Display shares owned, default to 0 if None -->
+                    <td>{{ stock.shares_owned or 0 }}</td>
+                    <td>
+                        <!-- Buy Form -->
+                        <form action="{{ url_for('buy_stock', stock_id=stock.stock_id) }}" method="post" style="display:inline;">
+                            <input type="number" name="quantity" min="1" required placeholder="Quantity" class="form-control d-inline-block" style="width: 100px;">
+                            <button type="submit" class="btn btn-success">Buy</button>
+                        </form>
+
+                        <!-- Sell Form -->
+                        <form action="{{ url_for('sell_stock', stock_id=stock.stock_id) }}" method="post" style="display:inline;">
+                            <input type="number" name="quantity" min="1" required placeholder="Quantity" class="form-control d-inline-block" style="width: 100px;">
+                            <button type="submit" class="btn btn-danger">Sell</button>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
