@@ -288,3 +288,4 @@ threading.Thread(target=update_stock_prices, daemon=True).start()
 
 if __name__ == '__main__':
     app.run(debug=True)
+
