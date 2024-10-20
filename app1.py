@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, redirect, url_for, flash, session, request
 from flask_mysqldb import MySQL
 import MySQLdb.cursors
 from decimal import Decimal
@@ -82,7 +82,11 @@ def index():
         user_balance = cursor.fetchone()['balance']
 
         # Fetch user's stocks
-        cursor.execute('SELECT * FROM stock WHERE user_id = %s', (user_id,))
+        cursor.execute('''
+            SELECT s.stock_id, s.company_name, s.ticker, s.current_price, COALESCE(us.stock_quantity, 0) AS stock_quantity
+            FROM stock s
+            LEFT JOIN user_stocks us ON s.stock_id = us.stock_id AND us.user_id = %s
+        ''', (user_id,))
         user_stocks = cursor.fetchall()
 
         return render_template('index.html', balance=user_balance, stocks=user_stocks)
@@ -115,8 +119,8 @@ def withdraw():
         result = cursor.fetchone()
 
         if result:
-            current_balance = result['balance']  # This is a Decimal
-            amount = Decimal(amount)  # Convert amount to Decimal
+            current_balance = result['balance']
+            amount = Decimal(amount)
 
             if amount > current_balance:
                 return render_template('index.html', msg='Not enough funds!', balance=current_balance)
@@ -147,9 +151,9 @@ def stocks():
 
         # Fetch stocks and the quantity owned by the user
         cursor.execute('''
-            SELECT s.stock_id, s.company_name, s.ticker, s.current_price, a.shares_owned
+            SELECT s.stock_id, s.company_name, s.ticker, s.current_price, COALESCE(us.stock_quantity, 0) AS shares_owned
             FROM stock s
-            LEFT JOIN accounts a ON a.id = %s
+            LEFT JOIN user_stocks us ON us.stock_id = s.stock_id AND us.user_id = %s
             LIMIT %s OFFSET %s
         ''', (user_id, per_page, offset))
         stocks = cursor.fetchall()
@@ -163,15 +167,98 @@ def stocks():
 
     return redirect(url_for('login'))
 
+@app.route('/buy_stock/<int:stock_id>', methods=['POST'])
+def buy_stock(stock_id):
+    if 'loggedin' in session:
+        user_id = session['id']
+        quantity = int(request.form['quantity'])
 
-from decimal import Decimal
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        # Fetch stock details
+        cursor.execute('SELECT current_price FROM stock WHERE stock_id = %s', (stock_id,))
+        stock = cursor.fetchone()
+
+        if stock:
+            current_price = Decimal(stock['current_price'])
+            total_cost = current_price * quantity
+
+            # Fetch user's balance
+            cursor.execute('SELECT balance FROM accounts WHERE id = %s', (user_id,))
+            user_balance = cursor.fetchone()['balance']
+
+            if total_cost > user_balance:
+                return redirect(url_for('stocks', msg='Not enough funds!'))
+
+            # Update user balance
+            new_balance = user_balance - total_cost
+            cursor.execute('UPDATE accounts SET balance = %s WHERE id = %s', (new_balance, user_id))
+
+            # Check if the user already owns this stock
+            cursor.execute('SELECT stock_quantity FROM user_stocks WHERE user_id = %s AND stock_id = %s', (user_id, stock_id))
+            user_shares = cursor.fetchone()
+
+            if user_shares:
+                # Update existing stock quantity
+                new_shares_owned = user_shares['stock_quantity'] + quantity
+                cursor.execute('UPDATE user_stocks SET stock_quantity = %s WHERE user_id = %s AND stock_id = %s', 
+                               (new_shares_owned, user_id, stock_id))
+            else:
+                # Insert new stock entry
+                cursor.execute('INSERT INTO user_stocks (user_id, stock_id, stock_quantity) VALUES (%s, %s, %s)', 
+                               (user_id, stock_id, quantity))
+
+            mysql.connection.commit()
+
+            return redirect(url_for('stocks', msg=f'Successfully bought {quantity} shares of stock ID {stock_id}!'))
+
+    return redirect(url_for('login'))
+
+@app.route('/sell_stock/<int:stock_id>', methods=['POST'])
+def sell_stock(stock_id):
+    if 'loggedin' in session:
+        user_id = session['id']
+        quantity = int(request.form['quantity'])
+
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        # Fetch shares owned
+        cursor.execute('SELECT stock_quantity, current_price FROM stock s LEFT JOIN user_stocks us ON s.stock_id = us.stock_id WHERE s.stock_id = %s AND us.user_id = %s', (stock_id, user_id))
+        stock = cursor.fetchone()
+
+        if stock:
+            shares_owned = stock['stock_quantity']
+            current_price = Decimal(stock['current_price'])
+            total_revenue = current_price * quantity
+
+            if quantity > shares_owned:
+                return redirect(url_for('stocks', msg='Not enough shares to sell!'))
+
+            # Update user balance
+            cursor.execute('SELECT balance FROM accounts WHERE id = %s', (user_id,))
+            user_balance = cursor.fetchone()['balance']
+            new_balance = user_balance + total_revenue
+            cursor.execute('UPDATE accounts SET balance = %s WHERE id = %s', (new_balance, user_id))
+
+            # Update shares owned
+            new_shares_owned = shares_owned - quantity
+            if new_shares_owned > 0:
+                cursor.execute('UPDATE user_stocks SET stock_quantity = %s WHERE stock_id = %s AND user_id = %s', (new_shares_owned, stock_id, user_id))
+            else:
+                cursor.execute('DELETE FROM user_stocks WHERE stock_id = %s AND user_id = %s', (stock_id, user_id))
+
+            mysql.connection.commit()
+
+            return redirect(url_for('stocks', msg=f'Successfully sold {quantity} shares of stock ID {stock_id}!'))
+
+    return redirect(url_for('login'))
 
 def update_stock_prices():
     with app.app_context():  # Set the application context for the thread
         while True:
             try:
-                cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)  # Use DictCursor
-                cursor.execute('SELECT stock_id, current_price FROM stock')  # Fetch current prices
+                cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+                cursor.execute('SELECT stock_id, current_price FROM stock')
                 stocks = cursor.fetchall()
 
                 if not stocks:
@@ -182,18 +269,19 @@ def update_stock_prices():
                 for stock in stocks:
                     stock_id = stock['stock_id']
                     current_price = stock['current_price']
-                    price_change = Decimal(random.uniform(-10, 10))  # Convert to Decimal
-                    new_price = current_price + price_change
+                    price_change = Decimal(random.uniform(-10, 10))
+                    new_price = max(current_price + price_change, 0)  # Ensure price does not go negative
 
-                    print(f"Updating stock_id {stock_id}: {current_price} -> {new_price}")  # Debug print
+                    print(f"Updating stock_id {stock_id}: {current_price} -> {new_price}")
 
+                    # Update the current price in the stock table
                     cursor.execute('UPDATE stock SET current_price = %s WHERE stock_id = %s', (new_price, stock_id))
                 
-                mysql.connection.commit()
-                cursor.close()
+                mysql.connection.commit()  # Commit the updates
+                cursor.close()  # Close the cursor
             except Exception as e:
-                print(f"Error updating stock prices: {e}")  # Log any errors
-            time.sleep(300)
+                print(f"Error updating stock prices: {e}")
+            time.sleep(300)  # Sleep for 5 minutes
 
 # Start the background thread for price updates
 threading.Thread(target=update_stock_prices, daemon=True).start()
