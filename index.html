@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Trading App - Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">Stock Trading App</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                </li>
+				<li class="nav-item">
+					<a class="nav-link" href="{{ url_for('stocks') }}">Stocks</a>
+				</li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2>Welcome, {{ session['username'] }}!</h2>
+        
+        {% if msg %}
+            <div class="alert alert-warning">{{ msg }}</div>
+        {% endif %}
+        
+        <h4>Your Balance: ${{ balance }}</h4>
+
+        <h5>Deposit Money</h5>
+        <form action="{{ url_for('deposit') }}" method="post">
+            <div class="form-group">
+                <input type="number" name="amount" class="form-control" placeholder="Deposit Amount" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Deposit</button>
+        </form>
+
+        <h5>Withdraw Money</h5>
+        <form action="{{ url_for('withdraw') }}" method="post">
+            <div class="form-group">
+                <input type="number" name="amount" class="form-control" placeholder="Withdraw Amount" required>
+            </div>
+            <button type="submit" class="btn btn-danger">Withdraw</button>
+        </form>
+
+        <h4>Your Stocks</h4>
+        {% if stocks %}
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Stock ID</th>
+                        <th>Company Name</th>
+                        <th>Ticker</th>
+                        <th>Quantity</th>
+                        <th>Initial Price</th>
+                        <th>Current Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stock in stocks %}
+                        <tr>
+                            <td>{{ stock.stock_id }}</td>
+                            <td>{{ stock.company_name }}</td>
+                            <td>{{ stock.ticker }}</td>
+                            <td>{{ stock.stock_quantity }}</td>
+                            <td>${{ stock.initial_price }}</td>
+                            <td>${{ stock.current_price }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No stocks owned.</p>
+        {% endif %}
+    </div>
+
+    <footer class="bg-light text-center py-3">
+        <p>&copy; 2024 Stock Trading App. All rights reserved.</p>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
