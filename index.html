@@ -15,11 +15,11 @@
                     <a class="nav-link" href="{{ url_for('index') }}">Home</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('stocks') }}">Stocks</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
                 </li>
-				<li class="nav-item">
-					<a class="nav-link" href="{{ url_for('stocks') }}">Stocks</a>
-				</li>
             </ul>
         </div>
     </nav>
@@ -31,12 +31,12 @@
             <div class="alert alert-warning">{{ msg }}</div>
         {% endif %}
         
-        <h4>Your Balance: ${{ balance }}</h4>
+        <h4>Funds: ${{ balance }}</h4>
 
         <h5>Deposit Money</h5>
         <form action="{{ url_for('deposit') }}" method="post">
             <div class="form-group">
-                <input type="number" name="amount" class="form-control" placeholder="Deposit Amount" required>
+                <input type="number" name="amount" class="form-control" placeholder="Deposit Amount" required min="0">
             </div>
             <button type="submit" class="btn btn-primary">Deposit</button>
         </form>
@@ -44,7 +44,7 @@
         <h5>Withdraw Money</h5>
         <form action="{{ url_for('withdraw') }}" method="post">
             <div class="form-group">
-                <input type="number" name="amount" class="form-control" placeholder="Withdraw Amount" required>
+                <input type="number" name="amount" class="form-control" placeholder="Withdraw Amount" required min="0">
             </div>
             <button type="submit" class="btn btn-danger">Withdraw</button>
         </form>
@@ -58,7 +58,6 @@
                         <th>Company Name</th>
                         <th>Ticker</th>
                         <th>Quantity</th>
-                        <th>Initial Price</th>
                         <th>Current Price</th>
                     </tr>
                 </thead>
@@ -69,7 +68,6 @@
                             <td>{{ stock.company_name }}</td>
                             <td>{{ stock.ticker }}</td>
                             <td>{{ stock.stock_quantity }}</td>
-                            <td>${{ stock.initial_price }}</td>
                             <td>${{ stock.current_price }}</td>
                         </tr>
                     {% endfor %}
