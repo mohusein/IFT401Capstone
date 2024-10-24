@@ -6,10 +6,18 @@ import re
 import random
 import threading
 import time
+import os
 
-app = Flask(__name__)
 
-app.secret_key = 'your secret key'
+# Define a constant for the repeated message
+FILL_FORM_MSG = 'Please fill out the form!'
+
+
+secret_key = os.urandom(24).hex()
+
+app = Flask(__name__, template_folder='templates')
+
+app.secret_key = secret_key
 
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
@@ -37,6 +45,28 @@ def login():
         else:
             msg = 'Incorrect username/password!'
     return render_template('login.html', msg=msg)
+
+@app.route('/admin_login', methods=['GET', 'POST'])
+def admin_login():
+    msg = ''
+    if request.method == 'POST' and 'username' in request.form and 'password' in request.form:
+        username = request.form['username']
+        password = request.form['password']
+
+
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('SELECT * FROM admins WHERE username = %s AND password = %s', (username, password,))
+        account = cursor.fetchone()
+
+        if account:
+            session['loggedin'] = True
+            session['id'] = account['id']
+            session['username'] = account['username']
+            msg = 'Logged in successfully!'
+            return redirect(url_for('admin_dashboard'))
+        else:
+            msg = 'Incorrect username/password!'
+    return render_template('admin_login.html', msg=msg)
 
 @app.route('/logout')
 def logout():
@@ -70,6 +100,95 @@ def register():
     elif request.method == 'POST':
         msg = 'Please fill out the form!'
     return render_template('register.html', msg=msg)
+    #C:\Users\mulki\Documents\capstone\capstone\templates\register.html
+
+@app.route('/admin_register', methods=['GET', 'POST'])
+def admin_register():
+    msg = ''
+    if request.method == 'POST' and 'username' in request.form and 'password' in request.form:
+        username = request.form['username']
+        password = request.form['password']
+        email = request.form['email']
+
+        if username and password and email:
+            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cursor.execute('SELECT * FROM admins WHERE username = %s', (username,))
+            account = cursor.fetchone()
+            if account:
+                msg = 'Admin account already exists!'
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('SELECT * FROM admins WHERE username = %s', (username,))
+        account = cursor.fetchone()
+        if account:
+            msg = 'Admin account already exists!'
+        elif not re.match(r'[A-Za-z0-9]+', username):
+            msg = 'Username must contain only characters and numbers!'
+        elif not username or not password:
+            msg = 'Please fill out the form!'
+        else:
+            cursor.execute('INSERT INTO admins (username, password) VALUES (%s, %s)', (username, password))
+            mysql.connection.commit()
+            msg = 'Admin registration successful!'
+            return redirect(url_for('addmin_login'))
+    else:
+        msg = 'Please fill out the form!'
+    return render_template('admin_register.html', msg=msg)
+
+@app.route('/admin_dashboard', methods=['GET', 'POST'])
+def admin_dashboard():
+    # if 'loggedin' in session and session.get('is_admin'):
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('SELECT * FROM stocks')
+        stocks = cursor.fetchall()
+
+        cursor.execute('SELECT * FROM admins')
+        accounts = cursor.fetchall()
+
+        return render_template('admin_dashboard.html', username=session['username'], stocks=stocks, accounts=accounts)
+    # return redirect(url_for('admin_login'))
+
+@app.route('/admin_login', methods=['GET', 'POST'])
+@app.route('/home', methods=['GET'])
+def user_index():
+    if 'loggedin' in session:
+
+    
+        return render_template('admin_dashboard.html', username=session['username'])
+    return redirect(url_for('login'))
+
+
+#admin add stock page
+@app.route('/add_stock', methods=['GET', 'POST'])
+def add_stock():
+    msg = ''
+    if 'loggedin' in session and session.get('is_admin'):
+        if request.method == 'POST':
+            company_name = request.form['company_name']
+            ticker = request.form['ticker']
+            initial_price = request.form['initial_price']
+            current_price = request.form['current_price']
+
+            cursor = mysql.connection.cursor()
+            cursor.execute('INSERT INTO stocks (company_name, ticker, initial_price, current_price) VALUES (%s, %s, %s, %s)', 
+                           (company_name, ticker, initial_price, current_price))
+            mysql.connection.commit()
+            msg = 'Stock added successfully!'
+            return redirect(url_for('admin_portfolio'))
+
+        return render_template('add_stock.html', msg=msg)
+    return redirect(url_for('admin_login'))
+
+#admin remove stock page
+@app.route('/remove_stock/<int:stock_id>', methods=['POST'])
+def remove_stock(stock_id):
+    if 'loggedin' in session and session.get('is_admin'):
+        cursor = mysql.connection.cursor()
+        cursor.execute('DELETE FROM stocks WHERE stock_id = %s', (stock_id,))
+        mysql.connection.commit()
+        flash('Stock removed successfully!', 'success')
+        return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('admin_login'))
+
 
 @app.route('/index', methods=['GET'])
 def index():
@@ -77,9 +196,18 @@ def index():
         user_id = session['id']
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
-        # Fetch user's balance
-        cursor.execute('SELECT balance FROM accounts WHERE id = %s', (user_id,))
-        user_balance = cursor.fetchone()['balance']
+       
+
+       # Fetch user's balance
+        cursor.execute('SELECT balance FROM accounts WHERE id = %s', (id,))
+        result = cursor.fetchone()
+
+        if result:  # Check if result is not None
+            user_balance = result['balance']
+        else:
+            user_balance = 0  # Or handle the case as appropriate
+        print('No balance found for the user.')
+
 
         # Fetch user's stocks
         cursor.execute('''
@@ -88,6 +216,7 @@ def index():
             LEFT JOIN user_stocks us ON s.stock_id = us.stock_id AND us.user_id = %s
         ''', (user_id,))
         user_stocks = cursor.fetchall()
+        print(f"User Stocks: {user_stocks}")
 
         return render_template('index.html', balance=user_balance, stocks=user_stocks)
     return redirect(url_for('login'))
@@ -134,38 +263,95 @@ def withdraw():
 
     return redirect(url_for('login'))
 
-@app.route('/stocks', methods=['GET'])
-def stocks():
-    if 'loggedin' in session:
-        user_id = session['id']
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+#@app.route('/get_transaction', methods=['GET'])
+#def get_transaction():
+   # if 'loggedin' in session:
+    #    user_id = session['id']
+       # cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
         # Fetch user's balance
-        cursor.execute('SELECT balance FROM accounts WHERE id = %s', (user_id,))
-        user_balance = cursor.fetchone()['balance']
+        #cursor.execute('SELECT balance FROM accounts WHERE id = %s', (user_id,))
+       # get_transaction = cursor.fetchone()
 
+       # return render_template('index.html', get_transaction=get_transaction)
+
+@app.route('/transactions')
+def transactions():
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute('SELECT company_name, transaction_type, shares, date, price FROM transactions')
+        transactions = cursor.fetchall()
+    except Exception as e:
+        return f"Error fetching transactions: {str(e)}"
+    finally:
+        cursor.close()
+
+        
+    #cursor.execute('SELECT company_name, transaction_type, shares, date, price FROM transactions')
+    #transactions = cursor.fetchall()
+    #cursor.close()
+    
+    return render_template('transactions.html', transactions=transactions)
+
+
+
+#def stocks():
+ #   if 'loggedin' in session:
+ #       id = session['id']
+  #      cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        # Fetch user's balance
+  #      cursor.execute('SELECT balance FROM accounts WHERE id = %s', (id,))
+  #      stocks = cursor.fetchone()
+#
         # Pagination logic
-        page = request.args.get('page', 1, type=int)
-        per_page = 10
-        offset = (page - 1) * per_page
+  #      page = request.args.get('page', 1, type=int)
+  #      per_page = 10
+  #      offset = (page - 1) * per_page
 
         # Fetch stocks and the quantity owned by the user
-        cursor.execute('''
-            SELECT s.stock_id, s.company_name, s.ticker, s.current_price, COALESCE(us.stock_quantity, 0) AS shares_owned
-            FROM stock s
-            LEFT JOIN user_stocks us ON us.stock_id = s.stock_id AND us.user_id = %s
-            LIMIT %s OFFSET %s
-        ''', (user_id, per_page, offset))
-        stocks = cursor.fetchall()
+   #     cursor.execute('''
+   #         SELECT s.stock_id, s.company_name, s.ticker, s.current_price, COALESCE(us.stock_quantity, 0) AS shares_owned
+    #        FROM stock s
+     #       LEFT JOIN user_stocks us ON us.stock_id = s.stock_id AND us.user_id = %s
+      #      LIMIT %s OFFSET %s
+     #   ''', (id, per_page, offset))
+     #   stocks = cursor.fetchall()
 
         # Count total stocks
-        cursor.execute('SELECT COUNT(*) as count FROM stock')
-        total_stocks = cursor.fetchone()['count']
+      #  cursor.execute('SELECT COUNT(*) as count FROM stock')
+     #   total_stocks = cursor.fetchone()['count']
 
+    #    cursor.close()
+     #   return render_template('stocks.html', stocks=stocks, page=page, per_page=per_page, total=total_stocks)
+
+   # return redirect(url_for('login'))
+
+@app.route('/stocks')
+def stocks():
+    cursor = mysql.connection.cursor()
+    page = request.args.get('page', 1, type=int)
+    per_page = 10  # Number of stocks to display per page
+
+    try:
+        # Fetch the total number of stocks
+        cursor.execute('SELECT COUNT(*) FROM stocks')
+        total_stocks = cursor.fetchone()[0]
+
+        # Calculate the offset for pagination
+        offset = (page - 1) * per_page
+
+        # Fetch the stocks for the current page
+        cursor.execute('SELECT * FROM stocks LIMIT %s OFFSET %s', (per_page, offset))
+        stocks= cursor.fetchall()
+    except Exception as e:
+        return f"An error occurred: {e}"
+    finally:
         cursor.close()
-        return render_template('stocks.html', stocks=stocks, page=page, per_page=per_page, total=total_stocks, balance=user_balance)
 
-    return redirect(url_for('login'))
+    return render_template('stocks.html')
+
 
 @app.route('/buy_stock/<int:stock_id>', methods=['POST'])
 def buy_stock(stock_id):
@@ -185,13 +371,13 @@ def buy_stock(stock_id):
 
             # Fetch user's balance
             cursor.execute('SELECT balance FROM accounts WHERE id = %s', (user_id,))
-            user_balance = cursor.fetchone()['balance']
+            result = cursor.fetchone()
 
-            if total_cost > user_balance:
+            if total_cost > new_balance:
                 return redirect(url_for('stocks', msg='Not enough funds!'))
 
             # Update user balance
-            new_balance = user_balance - total_cost
+            new_balance = new_balance - total_cost
             cursor.execute('UPDATE accounts SET balance = %s WHERE id = %s', (new_balance, user_id))
 
             # Check if the user already owns this stock
@@ -288,4 +474,3 @@ threading.Thread(target=update_stock_prices, daemon=True).start()
 
 if __name__ == '__main__':
     app.run(debug=True)
-

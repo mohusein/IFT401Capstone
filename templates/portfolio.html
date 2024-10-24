@@ -1,0 +1,88 @@
+{% extends "layout.html" %}
+
+{% block title %}My Portfolio{% endblock %}
+
+{% block main_content %}
+    <div class="portfolio-section">
+        <h2>Portfolio</h2>
+        <h3>Your Balance: ${{ balance }}</h3>
+
+        <!-- Deposit/Withdraw Form -->
+        <form method="POST" class="mt-3">
+            <div class="input-group mb-3">
+                <input type="number" class="form-control" name="amount" placeholder="Amount" required>
+                <button class="btn btn-outline-secondary" type="submit" name="action" value="deposit">Deposit</button>
+                <button class="btn btn-outline-secondary" type="submit" name="action" value="withdraw">Withdraw</button>
+            </div>
+        </form>
+
+        <!-- Portfolio Chart -->
+        <div class="portfolio-chart">
+            <h3>Stock Chart</h3>
+            <canvas id="stockChart" width="400" height="200"></canvas>
+        </div>
+
+        <!-- Stocks Owned Table -->
+        <div class="stocks-owned">
+            <h3>Stocks Owned</h3>
+            <table id="stocksTable" class="table table-striped mt-3">
+                <thead>
+                    <tr>
+                        <th>Company Name</th>
+                        <th>Ticker</th>
+                        <th>Quantity</th>
+                        <th>Initial Price</th>
+                        <th>Current Price</th>
+                        <th>Total Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stock in stocks %}
+                    <tr>
+                        <td>{{ stock.company_name }}</td>
+                        <td>{{ stock.ticker }}</td>
+                        <td>{{ stock.stock_quantity }}</td>
+                        <td>${{ stock.initial_price }}</td>
+                        <td>${{ stock.current_price }}</td>
+                        <td>${{ stock.stock_quantity * stock.current_price }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+
+{% block sidebar %}
+    <div class="transaction-history">
+        <h2>Transaction History</h2>
+        <table id="transactionTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Stock</th>
+                    <th>Shares</th>
+                    <th>Price</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if transactions %}
+                    {% for transaction in transactions %}
+                        <tr>
+                            <td>{{ transaction.transaction_type }}</td>
+                            <td>{{ transaction.company_name }}</td>
+                            <td>{{ transaction.shares }}</td>
+                            <td>${{ transaction.price }}</td>
+                            <td>{{ transaction.transaction_date }}</td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center">No transactions found.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
