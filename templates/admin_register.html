@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Admin Register</title>
@@ -11,17 +11,16 @@
             <div class="header">
                 <h1 class="word">Register Administrator</h1>
             </div>
-            <h2 class="word">
-                <form action="{{ url_for('admin_register') }}" method="post">
-                    <div class="msg">{{ msg }}</div>
-                    <input id="username" name="username" type="text" placeholder="Enter Your Username" class="textbox" required/><br><br>
-                    <input id="email" name="email" type="text" placeholder="Enter Your Email" class="textbox" required/><br><br>
-                    <input id="password" name="password" type="password" placeholder="Enter Your Password" class="textbox" required/><br><br>
-                    <input type="submit" class="btn" value="Sign Up"><br>
-                </form>
-            </h2>
-            <p class="bottom">Already have an  admin account? <a class="bottom" href="{{url_for('admin_login')}}"> Sign In here</a></p>
+            <form action="{{ url_for('admin_register') }}" method="post">
+                <div class="msg">{{ msg }}</div>
+                <input id="username" name="username" type="text" placeholder="Enter Your Username" class="textbox" required/><br><br>
+                <input id="email" name="email" type="text" placeholder="Enter Your Email" class="textbox" required/><br><br>
+                <input id="password" name="password" type="password" placeholder="Enter Your Password" class="textbox" required/><br><br>
+                <input type="submit" class="btn" value="Sign Up"><br>
+            </form>
+            <p class="bottom">Already have an admin account? <a class="bottom" href="{{url_for('admin_login')}}">Sign In here</a></p>
         </div>
     </div>
 </body>
 </html>
+
