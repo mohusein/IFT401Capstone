@@ -1,96 +1,109 @@
-{% extends 'layout.html' %}
-
-{% block title %}Stocks{% endblock %}
-
-{% block content %}
-<h1>Stock Management</h1>
-
-<!-- Flash messages for form submission feedback -->
-{% with messages = get_flashed_messages() %}
-    {% if messages %}
-        <div class="alert alert-info alert-dismissible fade show" role="alert">
-            {% for message in messages %}
-                {{ message }}
-            {% endfor %}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>{% block title %}Stocks{% endblock %}</title>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">Stock Trading App</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active"><a class="nav-link" href="{{ url_for('index') }}">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('stocks') }}">Stocks</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('transactions') }}">Transaction</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('contact') }}">Contact</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+            </ul>
         </div>
-    {% endif %}
-{% endwith %}
+    </nav>
 
-<form method="POST">
-    {{ form.hidden_tag() }}
-    <div class="form-group">
-        {{ form.company_name.label(class="form-label") }}
-        {{ form.company_name(class="form-control") }}
-    </div>
-    <div class="form-group">
-        {{ form.ticker.label(class="form-label") }}
-        {{ form.ticker(class="form-control") }}
-    </div>
-    <div class="form-group">
-        {{ form.current_price.label(class="form-label") }}
-        {{ form.current_price(class="form-control") }}
-    </div>
-    <div class="form-group">
-        {{ form.submit(class="btn btn-primary") }}
-    </div>
-</form>
+    <div class="container">
+        {% block content %}
+        <h1>Stock Management</h1>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Company Name</th>
-            <th>Ticker</th>
-            <th>Current Price</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody id="stock-table-body">
-        {% for stock in stocks.items %}
-        <tr id="stock-{{ stock.stock_id }}">
-            <td>{{ stock.stock_id }}</td>
-            <td>{{ stock.company_name }}</td>
-            <td>{{ stock.ticker }}</td>
-            <td class="current-price">${{ '%.2f' | format(stock.current_price) }}</td>
-            <td>
-                <a href="{{ url_for('delete_stock', stock_id=stock.stock_id) }}" 
-                   class="btn btn-danger" 
-                   onclick="return confirm('Are you sure you want to delete this stock?');">Delete</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    {% for message in messages %}{{ message }}{% endfor %}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endif %}
+        {% endwith %}
+    
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Company Name</th>
+                    <th>Ticker</th>
+                    <th>Current Price</th>
+                    <th>Shares Owned</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="stock-table-body">
+                {% for stock in stocks %}
+                <tr id="stock-{{ stock.stock_id }}">
+                    <td>{{ stock.company_name }}</td>
+                    <td>{{ stock.ticker }}</td>
+                    <td class="current-price">${{ '%.2f' | format(stock.current_price) }}</td>
+                    <td>{{ stock.stock_quantity }}</td>
+                    <td>
+                        <form action="{{ url_for('buy_stock', stock_id=stock.stock_id) }}" method="POST" class="d-inline">
+                            <input type="number" name="quantity" class="form-control" required min="1" style="width: 80px; display: inline;">
+                            <button type="submit" class="btn btn-success btn-sm">Buy</button>
+                        </form>
+                        <form action="{{ url_for('sell_stock', stock_id=stock.stock_id) }}" method="POST" class="d-inline">
+                            <input type="number" name="quantity" class="form-control" required min="1" max="{{ stock.stock_quantity }}" style="width: 80px; display: inline;">
+                            <button type="submit" class="btn btn-warning btn-sm">Sell</button>
+                        </form>
+                        <a href="{{ url_for('delete_stock', stock_id=stock.stock_id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this stock?');">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
 
-<div>
-    {% if stocks.has_prev %}
-        <a href="{{ url_for('stock', page=stocks.prev_num) }}" class="btn btn-secondary">Previous</a>
-    {% endif %}
-    {% if stocks.has_next %}
-        <a href="{{ url_for('stock', page=stocks.next_num) }}" class="btn btn-secondary">Next</a>
-    {% endif %}
-</div>
+        <div>
+            {% if stocks.has_prev %}
+                <a href="{{ url_for('stocks', page=stocks.prev_num) }}" class="btn btn-secondary">Previous</a>
+            {% endif %}
+            {% if stocks.has_next %}
+                <a href="{{ url_for('stocks', page=stocks.next_num) }}" class="btn btn-secondary">Next</a>
+            {% endif %}
+        </div>
+        {% endblock %}
+    </div>
 
-<script>
-    // Function to update stock prices every 10 seconds
-    function updateStockPrices() {
-        fetch('/update_prices')
-            .then(response => response.json())
-            .then(data => {
-                for (const [ticker, price] of Object.entries(data)) {
-                    // Find the corresponding table row and update the price
-                    const row = document.querySelector(`#stock-${ticker}`);
-                    if (row) {
-                        const priceCell = row.querySelector('.current-price');
-                        priceCell.textContent = `$${parseFloat(price).toFixed(2)}`;
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        function updateStockPrices() {
+            fetch('/update_prices')
+                .then(response => response.json())
+                .then(data => {
+                    for (const [ticker, price] of Object.entries(data)) {
+                        const row = document.querySelector(`#stock-${ticker}`);
+                        if (row) {
+                            const priceCell = row.querySelector('.current-price');
+                            priceCell.textContent = `$${parseFloat(price).toFixed(2)}`;
+                        }
                     }
-                }
-            })
-            .catch(error => console.error('Error updating prices:', error));
-    }
+                })
+                .catch(error => console.error('Error updating prices:', error));
+        }
+        setInterval(updateStockPrices, 10000);
+    </script>
 
-    // Call updateStockPrices every 10 seconds
-    setInterval(updateStockPrices, 10000);  // 10 seconds
-</script>
-
-{% endblock %}
+    <footer class="bg-light text-center py-3">
+        <p>&copy; 2024 Stock Trading App. All rights reserved.</p>
+    </footer>
+</body>
+</html>
