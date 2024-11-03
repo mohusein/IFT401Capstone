@@ -1,0 +1,67 @@
+CREATE DATABASE IF NOT EXISTS geeklogin;
+USE geeklogin;
+
+CREATE TABLE IF NOT EXISTS accounts (
+    id INT(11) NOT NULL AUTO_INCREMENT,
+    username VARCHAR(50) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    shares_owned DECIMAL(10, 2) DEFAULT 0,
+    balance DECIMAL(10, 2) DEFAULT 0,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS admins ( 
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS stocks (
+    stock_id INT AUTO_INCREMENT PRIMARY KEY,
+    company_name VARCHAR(100) NOT NULL,
+    ticker VARCHAR(10) NOT NULL UNIQUE,
+    initial_price DECIMAL(10, 2) NOT NULL,
+    current_price DECIMAL(10, 2) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_stocks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    stock_id INT NOT NULL,
+    stock_quantity INT DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES accounts(id),
+    FOREIGN KEY (stock_id) REFERENCES stocks(stock_id),
+    UNIQUE KEY (user_id, stock_id)
+);
+
+CREATE TABLE IF NOT EXISTS transactions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    stock_id INT NOT NULL,
+    company_name VARCHAR(100) NOT NULL, 
+    transaction_type ENUM('buy', 'sell') NOT NULL,
+    shares INT NOT NULL, 
+    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    price DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES accounts(id) ON DELETE CASCADE,
+    FOREIGN KEY (stock_id) REFERENCES stocks(stock_id) ON DELETE CASCADE
+);
+
+INSERT INTO stocks (company_name, ticker, initial_price, current_price) VALUES
+('Apple Inc.', 'AAPL', 150.00, 150.00),
+('Microsoft Corporation', 'MSFT', 280.00, 280.00),
+('Alphabet Inc.', 'GOOGL', 2800.00, 2800.00),
+('Amazon.com, Inc.', 'AMZN', 3500.00, 3500.00),
+('NVIDIA Corporation', 'NVDA', 220.00, 220.00),
+('Meta Platforms, Inc.', 'META', 350.00, 350.00),
+('Tesla, Inc.', 'TSLA', 700.00, 700.00),
+('Adobe Inc.', 'ADBE', 600.00, 600.00),
+('Salesforce.com, Inc.', 'CRM', 250.00, 250.00),
+('Intel Corporation', 'INTC', 50.00, 50.00),
+('Netflix, Inc.', 'NFLX', 500.00, 500.00),
+('Cisco Systems, Inc.', 'CSCO', 55.00, 55.00),
+('Oracle Corporation', 'ORCL', 90.00, 90.00),
+('PayPal Holdings, Inc.', 'PYPL', 200.00, 200.00),
+('Square, Inc. (Block, Inc.)', 'SQ', 260.00, 260.00);
