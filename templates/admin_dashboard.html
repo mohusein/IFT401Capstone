@@ -5,6 +5,37 @@
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script>
+        // Set the target time for market close (4 PM)
+        const marketCloseTime = new Date().setHours(16, 0, 0, 0);
+        const now = new Date().getTime();
+
+        // If it's already past 4 PM, set for the next day
+        const timerEnd = now > marketCloseTime ? marketCloseTime + 86400000 : marketCloseTime;
+
+        function startTimer() {
+            const x = setInterval(function() {
+                const now = new Date().getTime();
+                const distance = timerEnd - now;
+
+                // Time calculations for hours, minutes and seconds
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                // Display the result in the element with id="timer"
+                document.getElementById("timer").innerHTML = hours + "h " + minutes + "m " + seconds + "s ";
+
+                // If the countdown is over, display a message
+                if (distance < 0) {
+                    clearInterval(x);
+                    document.getElementById("timer").innerHTML = "Market Closed";
+                }
+            }, 1000);
+        }
+
+        window.onload = startTimer;
+    </script>
 </head>
 <body>
 
@@ -13,7 +44,7 @@
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Home</a>
+                    <a class="nav-link" href="{{ url_for('index') }}">Home</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
@@ -24,7 +55,10 @@
 
     <div class="container mt-5">
         <h1>Admin Dashboard</h1>
-        <h2>Manage Stocks</h2>
+        <h2>Stock Market Timer</h2>
+        <div id="timer" style="font-size: 24px; color: red; font-weight: bold;"></div>
+
+        <h2 class="mt-5">Manage Stocks</h2>
         <a href="{{ url_for('add_stock') }}" class="btn btn-primary mb-3">Add Stock</a>
         <table class="table table-striped">
             <thead>
@@ -43,11 +77,12 @@
                     <td>{{ stock.ticker }}</td>
                     <td>${{ stock.initial_price }}</td>
                     <td>${{ stock.current_price }}</td>
-                    <td>
-                        <form action="{{ url_for('remove_stock', stock_id=stock.stock_id) }}" method="POST">
-                            <button type="submit" class="btn btn-danger">Remove</button>
-                        </form>
-                    </td>
+                    
+                        <!-- Remove Stock Button -->
+            <form action="{{ url_for('remove_stock', stock_id=stock.stock_id) }}" method="POST" onsubmit="return confirm('Are you sure you want to remove this stock?');">
+                <button type="submit" class="btn btn-danger">Remove</button>
+            </form>
+                    
                 </tr>
                 {% endfor %}
             </tbody>
@@ -81,5 +116,6 @@
             </div>
         {% endif %}
     </div>
+
 </body>
 </html>
