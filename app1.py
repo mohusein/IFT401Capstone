@@ -39,23 +39,21 @@ class StockForm(FlaskForm):
     current_price = DecimalField('Current Price', validators=[DataRequired(), NumberRange(min=0)]) 
     submit = SubmitField('Add Stock')
 
-# FlaskForm for contact messages
-class ContactForm(FlaskForm):
-    name = StringField('Name', validators=[DataRequired()])
-    email = StringField('Email', validators=[DataRequired(), Email()])
-    message = TextAreaField('Message', validators=[DataRequired()])
-    submit = SubmitField('Send Message')
-
 # Database model for stocks
 class Stock(db.Model):
     __tablename__ = 'stocks'
     stock_id = db.Column(db.Integer, primary_key=True)
     company_name = db.Column(db.String(100), nullable=False)
     ticker = db.Column(db.String(10), nullable=False)
-    stock_quantity = db.Column(db.Integer, nullable=False)
     initial_price = db.Column(db.Numeric(10, 2), nullable=False)
     current_price = db.Column(db.Numeric(10, 2), nullable=False)
 
+# FlaskForm for contact messages
+class ContactForm(FlaskForm):
+    name = StringField('Name', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    message = TextAreaField('Message', validators=[DataRequired()])
+    submit = SubmitField('Send Message')
 
 # Database model for contact messages
 class ContactMessage(db.Model):
@@ -99,7 +97,7 @@ def admin_login():
             session['loggedin'] = True
             session['id'] = account['id']
             session['username'] = account['username']
-            session['is_admin'] = True
+            session['is_admin'] = True  # Add this line
             return redirect(url_for('admin_dashboard'))
         else:
             msg = 'Incorrect username/password!'
@@ -182,6 +180,16 @@ def admin_dashboard():
                                stocks=stocks, 
                                users=users)  # Pass user accounts to the template
     return redirect(url_for('admin_login'))
+
+
+#@app.route('/admin_login', methods=['GET', 'POST'])
+#@app.route('/home', methods=['GET'])
+#def user_index():
+#    if 'loggedin' in session:
+
+    
+#        return render_template('admin_dashboard.html', username=session['username'])
+#    return redirect(url_for('login'))
 
 # Stock management route for adding stocks
 @app.route('/add_stock', methods=['GET', 'POST'])
@@ -298,30 +306,56 @@ def withdraw():
                                                                                             
 @app.route('/stocks', methods=['GET', 'POST'])
 def stocks():
-    form = StockForm()  # Initialize the stock form
+    form = StockForm()
 
     if 'loggedin' in session:
-        if form.validate_on_submit():  # Check if the form is submitted and valid
+        user_id = session['id']
+
+        # Check if the form is submitted and valid to add a new stock
+        if form.validate_on_submit():
             new_stock = Stock(
                 company_name=form.company_name.data,
                 ticker=form.ticker.data,
-                stock_quantity=0,  # Set to zero for new stocks
-                initial_price=form.initial_price.data,  # Use initial_price from form
-                current_price=form.current_price.data,  # Use current_price from form
+                initial_price=form.initial_price.data,
+                current_price=form.current_price.data,
             )
-            db.session.add(new_stock)  # Add the new stock to the session
-            db.session.commit()  # Commit the session to save changes
-            flash('Stock added successfully!', 'success')  # Show success message
-            return redirect(url_for('stocks'))  # Redirect to the stock page
+            db.session.add(new_stock)
+            db.session.commit()
+            flash('Stock added successfully!', 'success')
+            return redirect(url_for('stocks'))
 
-        page = request.args.get('page', 1, type=int)  # Get the page number for pagination
-        stocks_per_page = 10  # Number of stocks to display per page
-        stocks = Stock.query.paginate(page=page, per_page=stocks_per_page, error_out=False)  # Paginate stock records
+        # Get the current page number for pagination
+        page = request.args.get('page', 1, type=int)
+        stocks_per_page = 10
 
-        return render_template('stocks.html', form=form, stocks=stocks.items, page=page, total=stocks.total, per_page=stocks_per_page)  # Render the stock management template
+        # Fetch paginated stocks
+        paginated_stocks = Stock.query.paginate(page=page, per_page=stocks_per_page, error_out=False)
+        all_stocks = paginated_stocks.items
 
-    flash('You must be logged in to view this page.', 'warning')  # Flash warning if not logged in
-    return redirect(url_for('login'))  # Redirect to login page if not logged in
+        # Get user's owned stock quantities from the `user_stocks` table using raw SQL query
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('SELECT stock_id, stock_quantity FROM user_stocks WHERE user_id = %s', (user_id,))
+        user_stocks = cursor.fetchall()
+
+        # Create a dictionary for user's stock quantities
+        user_stock_dict = {stock['stock_id']: stock['stock_quantity'] for stock in user_stocks}
+
+        # Add the user's quantity for each stock
+        for stock in all_stocks:
+            stock.user_quantity = user_stock_dict.get(stock.stock_id, 0)  # Set to 0 if not owned
+
+        return render_template(
+            'stocks.html',
+            form=form,
+            stocks=all_stocks,
+            page=page,
+            total=paginated_stocks.total,
+            per_page=stocks_per_page
+        )
+
+    # Redirect to login if not logged in
+    flash('You must be logged in to view this page.', 'warning')
+    return redirect(url_for('login'))
 
 @app.route('/transactions')
 def transactions():
@@ -349,7 +383,7 @@ def transactions():
 
         except Exception as e:
             flash(f'An error occurred while fetching transactions: {str(e)}', 'danger')
-            return redirect(url_for('stocks'))  # Redirect to stocks or another appropriate page
+            return redirect(url_for('stocks')) 
 
     flash('You must be logged in to view transactions.', 'warning')
     return redirect(url_for('login'))
@@ -420,15 +454,17 @@ def sell_stock(stock_id):
 
         try:
             # Fetch shares owned and stock details
-            cursor.execute('SELECT us.stock_quantity, s.current_price, s.company_name FROM stocks s '
-                           'JOIN user_stocks us ON s.stock_id = us.stock_id '
-                           'WHERE s.stock_id = %s AND us.user_id = %s', (stock_id, user_id))
+            cursor.execute(
+                'SELECT us.stock_quantity, s.current_price, s.company_name FROM stocks s '
+                'JOIN user_stocks us ON s.stock_id = us.stock_id '
+                'WHERE s.stock_id = %s AND us.user_id = %s', (stock_id, user_id)
+            )
             stock = cursor.fetchone()
 
             if stock:
                 shares_owned = stock['stock_quantity']
                 current_price = Decimal(stock['current_price'])
-                company_name = stock['company_name'] 
+                company_name = stock['company_name']
                 total_revenue = current_price * quantity
 
                 # Check if user has enough shares to sell
@@ -438,36 +474,49 @@ def sell_stock(stock_id):
 
                 # Update user balance
                 cursor.execute('SELECT balance FROM accounts WHERE id = %s', (user_id,))
-                user_balance = cursor.fetchone()['balance']
-                new_balance = user_balance + total_revenue
-                cursor.execute('UPDATE accounts SET balance = %s WHERE id = %s', (new_balance, user_id))
+                balance_result = cursor.fetchone()
+                if balance_result:
+                    user_balance = Decimal(balance_result['balance'])
+                    new_balance = user_balance + total_revenue
 
-                # Update shares owned or remove entry if all shares sold
-                new_shares_owned = shares_owned - quantity
-                if new_shares_owned > 0:
-                    cursor.execute('UPDATE user_stocks SET stock_quantity = %s WHERE stock_id = %s AND user_id = %s', 
-                                   (new_shares_owned, stock_id, user_id))
+                    # Update balance in the accounts table
+                    cursor.execute('UPDATE accounts SET balance = %s WHERE id = %s', (new_balance, user_id))
+
+                    # Update shares owned or remove entry if all shares sold
+                    new_shares_owned = shares_owned - quantity
+                    if new_shares_owned > 0:
+                        cursor.execute(
+                            'UPDATE user_stocks SET stock_quantity = %s WHERE stock_id = %s AND user_id = %s', 
+                            (new_shares_owned, stock_id, user_id)
+                        )
+                    else:
+                        cursor.execute(
+                            'DELETE FROM user_stocks WHERE stock_id = %s AND user_id = %s', 
+                            (stock_id, user_id)
+                        )
+
+                    # Log the transaction
+                    cursor.execute(
+                        'INSERT INTO transactions (user_id, stock_id, company_name, transaction_type, shares, price, date) '
+                        'VALUES (%s, %s, %s, %s, %s, %s, %s)',
+                        (user_id, stock_id, company_name, 'sell', quantity, current_price, datetime.now())
+                    )
+
+                    mysql.connection.commit()
+                    flash('Sale successful!', 'success')
+                    return redirect(url_for('stocks'))
                 else:
-                    cursor.execute('DELETE FROM user_stocks WHERE stock_id = %s AND user_id = %s', (stock_id, user_id))
-
-                # Log the transaction
-                cursor.execute(
-                    'INSERT INTO transactions (user_id, stock_id, company_name, transaction_type, shares, price, date) '  # Updated here
-                    'VALUES (%s, %s, %s, %s, %s, %s, %s)',
-                    (user_id, stock_id, company_name, 'sell', quantity, current_price, datetime.now())
-                )
-
-                mysql.connection.commit()
-                flash('Sale successful!', 'success')
-                return redirect(url_for('stocks'))
+                    flash("User balance not found.", "danger")
 
         except Exception as e:
-            mysql.connection.rollback()  # Rollback in case of error
+            # Rollback if there is an error
+            mysql.connection.rollback()
             flash(f'An error occurred: {str(e)}', 'danger')
+        finally:
+            cursor.close()
 
     flash('You must be logged in to perform this action.', 'warning')
     return redirect(url_for('login'))
-
 
 @app.route('/delete_stock/<int:stock_id>', methods=['POST'])
 def delete_stock(stock_id):
