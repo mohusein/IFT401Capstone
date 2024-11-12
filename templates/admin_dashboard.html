@@ -6,35 +6,36 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script>
-        // Set the target time for market close (4 PM)
-        const marketCloseTime = new Date().setHours(16, 0, 0, 0);
-        const now = new Date().getTime();
+        // Function to get Eastern Time and display it
+        function displayEasternTime() {
+            // Create a new Date object and convert it to Eastern Time
+            const easternOffset = -5;  // UTC offset for Eastern Time (without Daylight Saving Time)
+            const now = new Date();
+            const utc = now.getTime() + now.getTimezoneOffset() * 60000;  // Get UTC time in milliseconds
+            const easternTime = new Date(utc + (3600000 * easternOffset)); // Convert UTC to Eastern Time
 
-        // If it's already past 4 PM, set for the next day
-        const timerEnd = now > marketCloseTime ? marketCloseTime + 86400000 : marketCloseTime;
+            // Get hours, minutes, and seconds
+            let hours = easternTime.getHours();
+            let minutes = easternTime.getMinutes();
+            let seconds = easternTime.getSeconds();
 
-        function startTimer() {
-            const x = setInterval(function() {
-                const now = new Date().getTime();
-                const distance = timerEnd - now;
+            // Add leading zeroes if necessary
+            hours = hours < 10 ? '0' + hours : hours;
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            seconds = seconds < 10 ? '0' + seconds : seconds;
 
-                // Time calculations for hours, minutes and seconds
-                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            // Format time as HH:MM:SS
+            const timeString = hours + ':' + minutes + ':' + seconds;
 
-                // Display the result in the element with id="timer"
-                document.getElementById("timer").innerHTML = hours + "h " + minutes + "m " + seconds + "s ";
-
-                // If the countdown is over, display a message
-                if (distance < 0) {
-                    clearInterval(x);
-                    document.getElementById("timer").innerHTML = "Market Closed";
-                }
-            }, 1000);
+            // Display the time on the page
+            document.getElementById('current-time').innerHTML = timeString;
         }
 
-        window.onload = startTimer;
+        // Set the clock on page load and update it every second
+        window.onload = function() {
+            displayEasternTime();  // Display the current time when the page loads
+            setInterval(displayEasternTime, 1000); // Update the time every second
+        };
     </script>
 </head>
 <body>
@@ -55,8 +56,14 @@
 
     <div class="container mt-5">
         <h1>Admin Dashboard</h1>
-        <h2>Stock Market Timer</h2>
-        <div id="timer" style="font-size: 24px; color: red; font-weight: bold;"></div>
+        
+        <!-- Display Current Eastern Time -->
+        <h2 class="mt-5 text-center">Stock Market Hours (Eastern Time)</h2>
+        <div class="d-flex justify-content-center">
+            <div id="current-time" style="font-size: 48px; font-weight: bold; text-align: center;">
+                <!-- The time will be displayed here -->
+            </div>
+        </div>
 
         <h2 class="mt-5">Manage Stocks</h2>
         <a href="{{ url_for('add_stock') }}" class="btn btn-primary mb-3">Add Stock</a>
@@ -77,12 +84,11 @@
                     <td>{{ stock.ticker }}</td>
                     <td>${{ stock.initial_price }}</td>
                     <td>${{ stock.current_price }}</td>
-                    
-                        <!-- Remove Stock Button -->
-            <form action="{{ url_for('remove_stock', stock_id=stock.stock_id) }}" method="POST" onsubmit="return confirm('Are you sure you want to remove this stock?');">
-                <button type="submit" class="btn btn-danger">Remove</button>
-            </form>
-                    
+                    <td>
+                        <form action="{{ url_for('remove_stock', stock_id=stock.stock_id) }}" method="POST" onsubmit="return confirm('Are you sure you want to remove this stock?');">
+                            <button type="submit" class="btn btn-danger">Remove</button>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -103,6 +109,32 @@
                     <td>{{ user.username }}</td>
                     <td>{{ user.email }}</td>
                     <td>${{ user.balance }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2 class="mt-5">Transaction History</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Stock</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Transaction Type</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaction in transactions %}
+                <tr>
+                    <td>{{ transaction.user.username }}</td>
+                    <td>{{ transaction.stock.company_name }}</td>
+                    <td>{{ transaction.quantity }}</td>
+                    <td>${{ transaction.price }}</td>
+                    <td>{{ transaction.transaction_type }}</td>
+                    <td>{{ transaction.timestamp }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
