@@ -1,50 +1,124 @@
-.header{
-    padding: 5px 120px;
-    width: 150px;
-    height: 70px;
-    background-color: #236B8E; 
-}
-
-.border{
-    padding: 80px 50px;
+/* SENM Trading Title Box */
+.title-box {
+    background: linear-gradient(to right, #003366, #007A33); /* Same gradient as navbar */
+    color: #ffffff; /* White text */
+    padding: 20px 40px; /* Padding for spacing */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    margin-top: -50px;
+    margin-bottom: 20px; /* Spacing below the title box */
     width: 400px;
-    height: 450px;
-    border: 1px solid #236B8E;
-    border-radius: 0px;
-    background-color: #9AC0CD;
+    max-width: 90%; /* Responsive width */
+    text-align: center;
+    font-size: 1.5em; /* Slightly larger font size */
 }
 
-.btn {
-    padding: 10px 40px;
-    background-color: #236B8E; 
-    color: #FFFFFF;
-    font-style: oblique;
-    font-weight: bold;
-    border-radius: 10px;
+/* General Body Styles */
+body {
+    background-color: #739dd7; /* Light grey background matching existing theme */
+    color: #2e2e2e; /* Dark slate grey text */
+    font-family: Arial, sans-serif; /* Consistent font */
+        padding: 0;
 }
 
-.textbox{
-    padding: 10px 40px;
-    background-color: #236B8E; 
-    text-decoration-color: #FFFFFF;
-    border-radius: 10px;
+/* Centering the content */
+div[align="center"] {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    height: 100vh; /* Full viewport height */
 }
 
-::placeholder {
-    color: #FFFFFF;
-    opacity: 1;
-    font-style: oblique;
-    font-weight: bold;
+/* Border Container Styles */
+.border {
+    background-color: #e0ebf0; /* White background for the form container */
+    border: 2px solid #007A33; /* Deep green border to match theme */
+    border-radius: 8px; /* Rounded corners */
+    padding: 40px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    width: 400px;
+    max-width: 90%; /* Responsive width */
 }
 
-.word{
-    color: #FFFFFF;
-    font-style: oblique;
-    font-weight: bold;
+/* Header Styles */
+.header {
+    background: #007A33; /* Gradient matching navbar */
+    padding: 20px;
+    border-radius: 6px 6px 0 0; /* Rounded top corners */
 }
 
-.bottom{
-    color: #236B8E;
-    font-style: oblique;
-    font-weight: bold;
+.header h1 {
+    color: #ffffff; /* White text */
+    margin: 0;
+    text-align: center;
+}
+
+/* Form Styles */
+form {
+    margin-top: 30px;
+}
+
+form .textbox {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    border: 2px solid #007A33; /* Deep green border */
+    border-radius: 4px;
+    font-size: 1em;
+}
+
+form .textbox::placeholder {
+    color: #739dd7; /* Placeholder text color */
+    opacity: 1; /* Ensures placeholder text is opaque */
+}
+
+form .btn {
+    background-color: #007A33; /* Deep green button */
+    color: #ffffff;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 1em;
+}
+
+form .btn:hover {
+    background-color: #005A27; /* Darker green on hover */
+}
+
+/* Message Styles */
+.msg {
+    color: #D9534F; /* Red color for error messages */
+    margin-bottom: 20px;
+}
+
+/* Bottom Text Styles */
+.bottom {
+    color: #2e2e2e;
+    font-size: 0.9em;
+    text-align: center;
+}
+
+.bottom a {
+    color: #007A33; /* Deep green link */
+    text-decoration: none;
+}
+
+.bottom a:hover {
+    color: #005A27; /* Darker green on hover */
+}
+
+/* Remove default margin from h1 and h2 */
+h1, h2 {
+    margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .border, .title-box {
+        width: 90%;
+        padding: 20px;
+    }
 }
