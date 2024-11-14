@@ -5,6 +5,7 @@ from wtforms.validators import DataRequired, Email, NumberRange
 from flask_mysqldb import MySQL
 from flask_sqlalchemy import SQLAlchemy
 import MySQLdb.cursors
+from sqlalchemy import text
 from decimal import Decimal
 import re
 import random
@@ -103,6 +104,15 @@ def admin_login():
             msg = 'Incorrect username/password!'
     return render_template('admin_login.html', msg=msg)
 
+@app.route('/admin/dashboard')
+def admin_dashboard():
+
+    users = db.session.execute(text('SELECT * FROM accounts')).fetchall()
+
+    stocks = db.session.execute(text('SELECT * FROM stocks')).fetchall()
+
+    return render_template('admin_dashboard.html', users=users, stocks=stocks)
+
 # Logout route
 @app.route('/logout')
 def logout():
@@ -161,84 +171,60 @@ def admin_register():
     return render_template('admin_register.html', msg=msg)
 
 
-# Admin dashboard route
-@app.route('/admin_dashboard', methods=['GET'])
-def admin_dashboard():
-    if 'loggedin' in session and session.get('is_admin'):
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        
-        # Fetch stocks from the stocks table
-        cursor.execute('SELECT * FROM stocks')
-        stocks = cursor.fetchall()
-        
-        # Fetch user accounts from the accounts table
-        cursor.execute('SELECT username, email, balance FROM accounts')  # Fetch username, email, and balance
-        users = cursor.fetchall()  # Get all user accounts
-
-        return render_template('admin_dashboard.html', 
-                               username=session['username'], 
-                               stocks=stocks, 
-                               users=users)  # Pass user accounts to the template
-    return redirect(url_for('admin_login'))
-
-
-#@app.route('/admin_login', methods=['GET', 'POST'])
-#@app.route('/home', methods=['GET'])
-#def user_index():
-#    if 'loggedin' in session:
-
-    
-#        return render_template('admin_dashboard.html', username=session['username'])
-#    return redirect(url_for('login'))
-
-# Stock management route for adding stocks
-@app.route('/add_stock', methods=['GET', 'POST'])
+# Stock management route for adding/removing stocks
+@app.route('/admin/add_stock', methods=['GET', 'POST'])
 def add_stock():
-    msg = ''
-    
-    # Check if the user is logged in and is an admin
-    if 'loggedin' in session and session.get('is_admin'):
-        form = StockForm()  
-        if form.validate_on_submit():  # Validate form submission
-            company_name = form.company_name.data
-            ticker = form.ticker.data
-            initial_price = form.initial_price.data
-            current_price = form.current_price.data
-            
-            # Create new stock instance
-            new_stock = Stock(
-                company_name=company_name,
-                ticker=ticker,
-                stock_quantity=0,  # Assuming this is initially zero for new stocks
-                initial_price=initial_price,
-                current_price=current_price,
-            )
-            
-            # Add the new stock to the database
-            db.session.add(new_stock)
-            db.session.commit()
-            flash('Stock added successfully!', 'success')  # Flash success message
-            return redirect(url_for('admin_dashboard'))  # Redirect to admin dashboard after adding stock
-        
-        # Render the add stock template if the form was not submitted successfully
-        return render_template('add_stock.html', form=form)
-    
-    # Redirect to admin login if not logged in or not an admin
-    return redirect(url_for('admin_login'))
+    form = StockForm()  # Initialize the form
 
-# Remove stock route
-@app.route('/remove_stock/<int:stock_id>', methods=['POST'])
+    # Handle form submission
+    if form.validate_on_submit():
+        company_name = form.company_name.data
+        ticker = form.ticker.data
+        initial_price = form.initial_price.data
+        current_price = form.current_price.data
+
+        # Check if the stock already exists
+        existing_stock = Stock.query.filter_by(ticker=ticker).first()
+
+        if existing_stock:
+            flash('Stock with this ticker already exists!', 'danger')
+            return redirect(url_for('add_stock'))
+
+        # Add the new stock to the database
+        new_stock = Stock(
+            company_name=company_name,
+            ticker=ticker,
+            initial_price=initial_price,
+            current_price=current_price
+        )
+        db.session.add(new_stock)
+        db.session.commit()
+
+        flash('Stock added successfully!', 'success')
+        return redirect(url_for('admin_dashboard'))  # Redirect to the dashboard or another page
+
+    # Render the template and pass the form
+    return render_template('add_stock.html', form=form)
+
+
+@app.route('/admin/remove_stock/<int:stock_id>', methods=['POST'])
 def remove_stock(stock_id):
-    if 'loggedin' in session and session.get('is_admin'):
-        cursor = mysql.connection.cursor()
-        cursor.execute('DELETE FROM stocks WHERE stock_id = %s', (stock_id,))
-        mysql.connection.commit()
-        flash('Stock removed successfully!', 'success')
-        return redirect(url_for('admin_dashboard'))
+    stock_to_remove = Stock.query.get_or_404(stock_id)
     
-    # Redirect to admin login if not logged in or not an admin
-    return redirect(url_for('admin_login'))
-
+    # Remove associated user stocks before removing the stock itself
+    user_stocks = UserStock.query.filter_by(stock_id=stock_id).all()
+    for user_stock in user_stocks:
+        db.session.delete(user_stock)
+    
+    try:
+        db.session.delete(stock_to_remove)
+        db.session.commit()
+        flash(f'Successfully removed stock: {stock_to_remove.company_name} ({stock_to_remove.ticker})', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error removing stock: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin_dashboard'))
 
 
 @app.route('/index', methods=['GET'])
@@ -598,4 +584,3 @@ threading.Thread(target=update_stock_prices, daemon=True).start()
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # Create database tables if they don't exist
-    app.run(debug=True)  # Run the application in debug mode
