@@ -104,13 +104,11 @@ def admin_login():
             msg = 'Incorrect username/password!'
     return render_template('admin_login.html', msg=msg)
 
+
 @app.route('/admin/dashboard')
 def admin_dashboard():
-
     users = db.session.execute(text('SELECT * FROM accounts')).fetchall()
-
     stocks = db.session.execute(text('SELECT * FROM stocks')).fetchall()
-
     return render_template('admin_dashboard.html', users=users, stocks=stocks)
 
 # Logout route
@@ -184,20 +182,27 @@ def add_stock():
         current_price = form.current_price.data
 
         # Check if the stock already exists
-        existing_stock = Stock.query.filter_by(ticker=ticker).first()
+        existing_stock = db.session.execute(
+            text("SELECT * FROM stocks WHERE ticker = :ticker"), {'ticker': ticker}
+        ).fetchone()
 
         if existing_stock:
             flash('Stock with this ticker already exists!', 'danger')
             return redirect(url_for('add_stock'))
 
         # Add the new stock to the database
-        new_stock = Stock(
-            company_name=company_name,
-            ticker=ticker,
-            initial_price=initial_price,
-            current_price=current_price
+        db.session.execute(
+            text("""
+            INSERT INTO stocks (company_name, ticker, initial_price, current_price) 
+            VALUES (:company_name, :ticker, :initial_price, :current_price)
+            """),
+            {
+                'company_name': company_name,
+                'ticker': ticker,
+                'initial_price': initial_price,
+                'current_price': current_price
+            }
         )
-        db.session.add(new_stock)
         db.session.commit()
 
         flash('Stock added successfully!', 'success')
@@ -209,21 +214,31 @@ def add_stock():
 
 @app.route('/admin/remove_stock/<int:stock_id>', methods=['POST'])
 def remove_stock(stock_id):
-    stock_to_remove = Stock.query.get_or_404(stock_id)
-    
+    # Check if the stock exists
+    stock_to_remove = db.session.execute(
+        text("SELECT * FROM stocks WHERE stock_id = :stock_id"), {'stock_id': stock_id}
+    ).fetchone()
+
+    if not stock_to_remove:
+        flash('Stock not found!', 'danger')
+        return redirect(url_for('admin_dashboard'))
+
     # Remove associated user stocks before removing the stock itself
-    user_stocks = UserStock.query.filter_by(stock_id=stock_id).all()
-    for user_stock in user_stocks:
-        db.session.delete(user_stock)
-    
+    db.session.execute(
+        text("DELETE FROM user_stocks WHERE stock_id = :stock_id"), {'stock_id': stock_id}
+    )
+
+    # Remove the stock itself
     try:
-        db.session.delete(stock_to_remove)
+        db.session.execute(
+            text("DELETE FROM stocks WHERE stock_id = :stock_id"), {'stock_id': stock_id}
+        )
         db.session.commit()
         flash(f'Successfully removed stock: {stock_to_remove.company_name} ({stock_to_remove.ticker})', 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'Error removing stock: {str(e)}', 'danger')
-    
+
     return redirect(url_for('admin_dashboard'))
 
 
