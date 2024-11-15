@@ -6,24 +6,58 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script>
-        // Function to get Eastern Time and display it
+        let isGreen = true;
+
+        // Function to get Eastern Time in 12-hour format and display it
         function displayEasternTime() {
             const easternOffset = -5;  // UTC offset for Eastern Time (without Daylight Saving Time)
             const now = new Date();
             const utc = now.getTime() + now.getTimezoneOffset() * 60000;  // Get UTC time in milliseconds
             const easternTime = new Date(utc + (3600000 * easternOffset)); // Convert UTC to Eastern Time
 
+            // Get hours, minutes, and seconds
             let hours = easternTime.getHours();
             let minutes = easternTime.getMinutes();
             let seconds = easternTime.getSeconds();
 
-            hours = hours < 10 ? '0' + hours : hours;
+            // Determine AM or PM suffix
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+
+            // Convert to 12-hour format
+            hours = hours % 12;
+            hours = hours ? hours : 12; // If hours is 0, make it 12
+
+            // Add leading zeroes if necessary
             minutes = minutes < 10 ? '0' + minutes : minutes;
             seconds = seconds < 10 ? '0' + seconds : seconds;
 
-            const timeString = hours + ':' + minutes + ':' + seconds;
+            // Format time as HH:MM:SS AM/PM
+            const timeString = hours + ':' + minutes + ':' + seconds + ' ' + ampm;
 
-            document.getElementById('current-time').innerHTML = timeString;
+            // Display the time on the page
+            const timeElement = document.getElementById('current-time');
+            timeElement.innerHTML = timeString;
+
+            // Set market hours (9:30 AM to 4:00 PM Eastern Time)
+            const marketOpenHour = 9;
+            const marketOpenMinute = 30;
+            const marketCloseHour = 16;
+
+            // Check if current time is within market hours
+            if ((easternTime.getHours() > marketOpenHour || 
+                 (easternTime.getHours() === marketOpenHour && easternTime.getMinutes() >= marketOpenMinute)) && 
+                 easternTime.getHours() < marketCloseHour) {
+                // If within market hours, toggle color between green and red
+                if (isGreen) {
+                    timeElement.style.color = 'green';
+                } else {
+                    timeElement.style.color = 'red';
+                }
+                isGreen = !isGreen; // Flip the color for the next update
+            } else {
+                // If outside market hours, set color to black
+                timeElement.style.color = 'black';
+            }
         }
 
         // Set the clock on page load and update it every second
@@ -39,8 +73,12 @@
         <a class="navbar-brand" href="#">Stock Trading App</a>
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav mr-auto">
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_dashboard') }}">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                </li>
             </ul>
         </div>
     </nav>
@@ -56,21 +94,6 @@
             </div>
         </div>
 
-        <!-- Flash Messages Section -->
-        {% with messages = get_flashed_messages(with_categories=True) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <!-- Manage Stocks Section -->
         <h2 class="mt-5">Manage Stocks</h2>
         <a href="{{ url_for('add_stock') }}" class="btn btn-primary mb-3">Add Stock</a>
         <table class="table table-striped">
@@ -100,7 +123,6 @@
             </tbody>
         </table>
 
-        <!-- User Accounts Section -->
         <h2 class="mt-5">User Accounts</h2>
         <table class="table table-striped">
             <thead>
@@ -120,12 +142,41 @@
                 {% endfor %}
             </tbody>
         </table>
+
+        <h2 class="mt-5">Transaction History</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Stock</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Transaction Type</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaction in transactions %}
+                <tr>
+                    <td>{{ transaction.user.username }}</td>
+                    <td>{{ transaction.stock.company_name }}</td>
+                    <td>{{ transaction.quantity }}</td>
+                    <td>${{ transaction.price }}</td>
+                    <td>{{ transaction.transaction_type }}</td>
+                    <td>{{ transaction.timestamp }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if get_flashed_messages() %}
+            <div class="mt-3">
+                {% for message in get_flashed_messages() %}
+                    <div class="alert alert-info">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
     </div>
 
-    <!-- Scripts for Bootstrap -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
-
