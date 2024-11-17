@@ -3,16 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Link to your custom CSS file -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    
+    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    
     <title>{% block title %}Stocks{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.min.css" rel="stylesheet">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">Stock Trading App</a>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <a class="navbar-brand" href="#">SENM Trading</a>
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav mr-auto">
-                <li class="nav-item active"><a class="nav-link" href="{{ url_for('index') }}">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('stocks') }}">Stocks</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Home</a></li>
+                <li class="nav-item active"><a class="nav-link" href="{{ url_for('stocks') }}">Stocks</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('transactions') }}">Transactions</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('contact') }}">Contact</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
@@ -20,8 +27,7 @@
         </div>
     </nav>
 
-    <div class="container">
-        {% block content %}
+    <div class="container mt-5">
         <h1>Stock Management</h1>
 
         {% with messages = get_flashed_messages() %}
@@ -34,8 +40,14 @@
                 </div>
             {% endif %}
         {% endwith %}
-    
-        <table class="table">
+
+        <!-- Information about market hours -->
+        <div class="alert alert-info text-center mt-4">
+            <strong>Market Hours:</strong> 9:30 AM - 4:00 PM (EST), Monday to Friday
+        </div>
+
+        {% if stocks %}
+        <table class="table table-striped mt-3">
             <thead>
                 <tr>
                     <th>Company Name</th>
@@ -45,7 +57,7 @@
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody id="stock-table-body">
+            <tbody>
                 {% for stock in stocks %}
                 <tr id="stock-{{ stock.stock_id }}">
                     <td>{{ stock.company_name }}</td>
@@ -54,24 +66,24 @@
                     <td>{{ stock.user_quantity }}</td>
                     <td>
                         <!-- Buy Form -->
-                        <form action="{{ url_for('buy_stock', stock_id=stock.stock_id) }}" method="POST" class="d-inline">
-                            <input type="number" name="quantity" class="form-control" required min="1" style="width: 80px; display: inline;">
-                            <button type="submit" class="btn btn-success btn-sm">Buy</button>
+                        <form action="{{ url_for('buy_stock', stock_id=stock.stock_id) }}" method="POST" class="d-inline" id="buy-form-{{ stock.stock_id }}">
+                            <input type="number" name="quantity" class="form-control" required min="1" style="width: 80px; display: inline;" id="quantity-{{ stock.stock_id }}">
+                            <button type="submit" class="btn btn-success btn-sm" onclick="confirmPurchase(event, {{ stock.stock_id }}, '{{ stock.company_name }}', {{ stock.current_price }})">Buy</button>
                         </form>
 
                         <!-- Sell Form -->
-                        <form action="{{ url_for('sell_stock', stock_id=stock.stock_id) }}" method="POST" class="d-inline">
-                            <input type="number" name="quantity" class="form-control" required min="1" max="{{ stock.user_quantity }}" style="width: 80px; display: inline;">
-                            <button type="submit" class="btn btn-warning btn-sm">Sell</button>
+                        <form action="{{ url_for('sell_stock', stock_id=stock.stock_id) }}" method="POST" class="d-inline" id="sell-form-{{ stock.stock_id }}">
+                            <input type="number" name="quantity" class="form-control" required min="1" max="{{ stock.user_quantity }}" style="width: 80px; display: inline;" id="sell-quantity-{{ stock.stock_id }}">
+                            <button type="button" class="btn btn-warning btn-sm" onclick="confirmSell(event, {{ stock.stock_id }}, '{{ stock.company_name }}', {{ stock.current_price }})">Sell</button>
                         </form>
-
-                        <!-- Delete Link -->
-                        <a href="{{ url_for('delete_stock', stock_id=stock.stock_id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this stock?');">Delete</a>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+        {% else %}
+            <p>No stocks available.</p>
+        {% endif %}
 
         <!-- Pagination Controls -->
         <div class="d-flex justify-content-between">
@@ -83,13 +95,20 @@
                 <a href="{{ url_for('stocks', page=page + 1) }}" class="btn btn-secondary">Next</a>
             {% endif %}
         </div>
-        {% endblock %}
     </div>
 
-    <!-- JS scripts -->
+    <footer class="bg-light text-center py-3">
+        <p>Copyright &copy; 2024 SENM Trading</p>
+        <p>IFT 401 Created by Sam Faivre, Nolan Klein, Esther Oyekola, Mulki Husein.</p>
+    </footer>
+
+    <!-- JS Scripts -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- Include SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.all.min.js"></script>
 
     <!-- Auto-update stock prices -->
     <script>
@@ -108,11 +127,46 @@
                 .catch(error => console.error('Error updating prices:', error));
         }
         setInterval(updateStockPrices, 10000);
-    </script>
 
-    <!-- Footer -->
-    <footer class="bg-light text-center py-3">
-        <p>&copy; 2024 Stock Trading App. All rights reserved.</p>
-    </footer>
+        // SweetAlert confirmation for buying stocks
+        function confirmPurchase(event, stockId, companyName, currentPrice) {
+            event.preventDefault();
+            var quantity = document.getElementById('quantity-' + stockId).value;
+            var totalCost = currentPrice * quantity;
+
+            Swal.fire({
+                title: 'Confirm Purchase',
+                text: `Are you sure you want to buy ${quantity} shares of ${companyName} at $${currentPrice} each? Total cost: $${totalCost.toFixed(2)}`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, buy it!',
+                cancelButtonText: 'Cancel',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('buy-form-' + stockId).submit();
+                }
+            });
+        }
+
+        // SweetAlert confirmation for selling stocks
+        function confirmSell(event, stockId, companyName, currentPrice) {
+            event.preventDefault();
+            var quantity = document.getElementById('sell-quantity-' + stockId).value;
+            var totalRevenue = currentPrice * quantity;
+
+            Swal.fire({
+                title: 'Confirm Sale',
+                text: `Are you sure you want to sell ${quantity} shares of ${companyName} at $${currentPrice} each? Total revenue: $${totalRevenue.toFixed(2)}`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, sell it!',
+                cancelButtonText: 'Cancel',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('sell-form-' + stockId).submit();
+                }
+            });
+        }
+    </script>
 </body>
 </html>

@@ -1,28 +1,142 @@
-<!-- Store this code in 'admin_login.html' file inside the 'templates' folder -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-		<meta charset="UTF-8">
-		<title> Admin Login </title>
-		<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">		 
-	</head>
-	<body></br></br></br></br></br>
-			<div class="header">
-				<h1 class="word">Admin Login</h1>
-			</div></br></br></br>
-			<h2 class="word">
-				<form action="{{ url_for('admin_login') }}" method="post">
-				<div class="msg">{{ msg }}</div>
-					<input id="username" name="username" type="text" placeholder="Enter Your Username" class="textbox"/></br></br>
-					<input id="password" name="password" type="password" placeholder="Enter Your Password" class="textbox"/></br></br></br>
-					<input type="submit" class="btn" value="Sign In"></br></br>
-				</form>
-			</h2>
-			<p class="bottom">Don't have an account? <a class="bottom" href="{{url_for('admin_register')}}"> Sign Up here</a></p>
-		</div>
-		</div>
-		<div class="admin-login">
-			<p>Or <a href="{{ url_for('login') }}">Login as a Customer</a></p>
-		</div>
-	</body>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - SENM Trading</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        /* Gradient Title */
+        .title-box {
+            background: linear-gradient(90deg, #007A33, #003366);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 30px;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .title-box h1 {
+            font-size: 2.5rem;
+            margin: 0;
+        }
+
+        /* Form Container */
+        .form-container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        /* Error Message */
+        .msg {
+            color: #e74c3c;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        /* Input Fields */
+        .textbox {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        /* Submit Button */
+        .btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1rem;
+            background: #3498db;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+        }
+
+        /* Bottom Links */
+        .bottom {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .bottom a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .bottom a:hover {
+            text-decoration: underline;
+        }
+
+        /* Footer */
+        footer {
+            background-color: #f1f1f1;
+            text-align: center;
+            padding: 15px;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Gradient Title Box -->
+    <div class="title-box">
+        <h1>SENM Trading</h1>
+    </div>
+
+    <!-- Form Container -->
+    <div class="form-container">
+        <h2>Admin Login</h2>
+        
+        <!-- Error Message -->
+        {% if msg %}
+            <div class="msg">{{ msg }}</div>
+        {% endif %}
+        
+        <!-- Admin Login Form -->
+        <form action="{{ url_for('admin_login') }}" method="post">
+            <input id="username" name="username" type="text" placeholder="Enter Your Username" class="textbox" required />
+            <input id="password" name="password" type="password" placeholder="Enter Your Password" class="textbox" required />
+            
+            <input type="submit" class="btn" value="Sign In">
+        </form>
+
+        <!-- Links -->
+        <p class="bottom">Don't have an account? <a href="{{ url_for('admin_register') }}">Sign Up as Admin</a></p>
+        <div class="bottom">
+            <p>Or <a href="{{ url_for('login') }}">Login as a Customer</a></p>
+        </div>
+    </div>
+</body>
 </html>

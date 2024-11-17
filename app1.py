@@ -8,6 +8,7 @@ import MySQLdb.cursors
 from sqlalchemy import text
 from decimal import Decimal
 import re
+import pytz
 import random
 import threading
 import time
@@ -273,10 +274,11 @@ def deposit():
             cursor = mysql.connection.cursor()
             cursor.execute('UPDATE accounts SET balance = balance + %s WHERE id = %s', (amount, user_id))
             mysql.connection.commit()
-            return redirect(url_for('index'))
+            flash('Deposit successful!', 'success')
         else:
-            msg = 'Please enter a positive amount!'
-            return render_template('index.html', msg=msg)
+            flash('Please enter a positive amount!', 'danger')
+        
+        return redirect(url_for('index'))
 
 @app.route('/withdraw', methods=['POST'])
 def withdraw():
@@ -294,16 +296,17 @@ def withdraw():
             amount = Decimal(amount)
 
             if amount > current_balance:
-                return render_template('index.html', msg='Not enough funds!', balance=current_balance)
-
-            # Update the balance
-            new_balance = current_balance - amount
-            cursor.execute('UPDATE accounts SET balance = %s WHERE id = %s', (new_balance, user_id))
-            mysql.connection.commit()
-
-            return render_template('index.html', msg='Withdrawal successful!', balance=new_balance)
-
-    return redirect(url_for('login'))
+                flash('Not enough funds!', 'danger')
+            else:
+                # Update the balance
+                new_balance = current_balance - amount
+                cursor.execute('UPDATE accounts SET balance = %s WHERE id = %s', (new_balance, user_id))
+                mysql.connection.commit()
+                flash('Withdrawal successful!', 'success')
+        
+        return redirect(url_for('index'))
+    
+    return redirect(url_for('index'))
                                                                                             
 @app.route('/stocks', methods=['GET', 'POST'])
 def stocks():
@@ -389,67 +392,114 @@ def transactions():
     flash('You must be logged in to view transactions.', 'warning')
     return redirect(url_for('login'))
 
+market_open = False  # None means "use real market hours"; True = market open, False = market closed FOR TESTING MARKET HOUR FUNCTIONALITY
 
-# Buy stock route
-@app.route('/buy_stock/<int:stock_id>', methods=['POST'])
+# Check if the market is open based on real time (market hours 9:30 AM - 4:00 PM ET)
+def is_market_open():
+    if market_open is not None:
+        return market_open  # If market_open is explicitly set (True or False), return it
+
+    eastern = pytz.timezone('US/Eastern')
+    now_utc = datetime.now(pytz.utc)
+    now_et = now_utc.astimezone(eastern)
+
+    # Check if it's a weekday (0-4: Monday to Friday)
+    if now_et.weekday() < 5:  # Monday is 0, Sunday is 6
+        # Market opens at 9:30 AM and closes at 4:00 PM
+        market_open_time = now_et.replace(hour=9, minute=30, second=0, microsecond=0)
+        market_close_time = now_et.replace(hour=16, minute=0, second=0, microsecond=0)
+
+        if market_open_time <= now_et <= market_close_time:
+            return True
+    return False
+
+# Route to toggle market status for testing (used during development)
+@app.route('/toggle_market', methods=['GET'])
+def toggle_market():
+    global market_open
+    if market_open is None:
+        flash("Market status is automatically controlled by time.", "info")
+    else:
+        market_open = not market_open  # Toggle the market status (open/close)
+        status = "open" if market_open else "closed"
+        flash(f"Market is now {status}.", "info")
+    return redirect(url_for('stocks'))  # Redirect to the stocks page or any other page
+
+# Route to buy stock (only when market is open)
+@app.route('/buy_stock/<int:stock_id>', methods=['GET', 'POST'])
 def buy_stock(stock_id):
     if 'loggedin' in session:
         user_id = session['id']
-        quantity = int(request.form['quantity'])
+
+        # Check if market is open
+        if not is_market_open():
+            flash('The market is closed. You can only buy stocks during market hours (9:30 AM - 4:00 PM ET).', 'warning')
+            return redirect(url_for('stocks'))
+
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
-        try:
-            # Fetch stock details
-            cursor.execute('SELECT current_price, company_name FROM stocks WHERE stock_id = %s', (stock_id,))
-            stock = cursor.fetchone()
-            
-            if stock:
-                current_price = Decimal(stock['current_price'])
-                company_name = stock['company_name'] 
+        # Fetch stock details from the database
+        cursor.execute('SELECT current_price, company_name FROM stocks WHERE stock_id = %s', (stock_id,))
+        stock = cursor.fetchone()
+
+        if stock:
+            current_price = Decimal(stock['current_price'])
+            company_name = stock['company_name']
+
+            if request.method == 'POST':
+                # Get the quantity from the form
+                quantity = int(request.form['quantity'])
                 total_cost = current_price * quantity
 
-                # Check user's current balance
+                # Check if the user has enough balance
                 cursor.execute('SELECT balance FROM accounts WHERE id = %s', (user_id,))
                 result = cursor.fetchone()
                 current_balance = result['balance']
+
                 if total_cost > current_balance:
                     flash('Not enough funds!', 'danger')
                     return redirect(url_for('stocks'))
 
-                # Update user's balance
+                # Update the user's balance after purchase
                 new_balance = current_balance - total_cost
                 cursor.execute('UPDATE accounts SET balance = %s WHERE id = %s', (new_balance, user_id))
 
-                # Update user_stocks or insert if it doesn't exist
-                cursor.execute('INSERT INTO user_stocks (user_id, stock_id, stock_quantity) '
-                               'VALUES (%s, %s, %s) '
-                               'ON DUPLICATE KEY UPDATE stock_quantity = stock_quantity + %s', 
-                               (user_id, stock_id, quantity, quantity))
+                # Update user's stock holdings (either insert or update)
+                cursor.execute('''
+                    INSERT INTO user_stocks (user_id, stock_id, stock_quantity)
+                    VALUES (%s, %s, %s)
+                    ON DUPLICATE KEY UPDATE stock_quantity = stock_quantity + %s
+                ''', (user_id, stock_id, quantity, quantity))
 
                 # Log the transaction
-                cursor.execute(
-                    'INSERT INTO transactions (user_id, stock_id, company_name, transaction_type, shares, price, date) '
-                    'VALUES (%s, %s, %s, %s, %s, %s, %s)',
-                    (user_id, stock_id, company_name, 'buy', quantity, current_price, datetime.now())
-                )
+                cursor.execute('''
+                    INSERT INTO transactions (user_id, stock_id, company_name, transaction_type, shares, price, date)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ''', (user_id, stock_id, company_name, 'buy', quantity, current_price, datetime.now()))
 
+                # Commit the changes to the database
                 mysql.connection.commit()
                 flash('Purchase successful!', 'success')
                 return redirect(url_for('stocks'))
-
-        except Exception as e:
-            mysql.connection.rollback()  # Rollback in case of error
-            flash(f'An error occurred: {str(e)}', 'danger')
+        
+        # If stock doesn't exist, handle that case
+        flash('Stock not found.', 'danger')
+        return redirect(url_for('stocks'))
 
     flash('You must be logged in to perform this action.', 'warning')
     return redirect(url_for('login'))
 
-# Sell stock route
+# Route to sell stock (only when market is open)
 @app.route('/sell_stock/<int:stock_id>', methods=['POST'])
 def sell_stock(stock_id):
     if 'loggedin' in session:
         user_id = session['id']
         quantity = int(request.form['quantity'])
+
+        # Check if market is open
+        if not is_market_open():
+            flash('The market is closed. You can only sell stocks during market hours (9:30 AM - 4:00 PM ET).', 'warning')
+            return redirect(url_for('stocks'))
 
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
@@ -517,21 +567,6 @@ def sell_stock(stock_id):
             cursor.close()
 
     flash('You must be logged in to perform this action.', 'warning')
-    return redirect(url_for('login'))
-
-@app.route('/delete_stock/<int:stock_id>', methods=['POST'])
-def delete_stock(stock_id):
-    if 'loggedin' in session:
-        user_id = session['id']
-        cursor = mysql.connection.cursor()
-        
-        # Delete stock from user_stocks table
-        cursor.execute('DELETE FROM user_stocks WHERE stock_id = %s AND user_id = %s', (stock_id, user_id))
-        
-        mysql.connection.commit()
-        flash('Stock deleted successfully!')
-        return redirect(url_for('stocks'))
-
     return redirect(url_for('login'))
 
 # Route for the contact page

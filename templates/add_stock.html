@@ -5,12 +5,130 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <title>{% block title %}Add Stock{% endblock %}</title>
+    <style>
+        /* Dark Mode Custom CSS */
+        body {
+            background-color: #1f1f1f; /* Dark background */
+            color: #e0e0e0; /* Light gray text for readability */
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh; /* Ensures the body stretches to the full height of the screen */
+        }
+
+        .navbar {
+            background: linear-gradient(to right, #003366, #007A33); /* Deep blue to green gradient */
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .navbar-nav .nav-link {
+            color: #f8f9fa !important;
+            font-size: 1.1em;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #28a745 !important; /* Light green on hover */
+        }
+
+        .container {
+            margin-top: 50px;
+            flex-grow: 1; /* Allow the container to expand and push footer down */
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #ffffff; /* White text for headings */
+        }
+
+        .form-group label {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #e0e0e0; /* Light gray labels */
+        }
+
+        .form-control {
+            background-color: #333333; /* Dark input fields */
+            border: 1px solid #444444;
+            color: #e0e0e0; /* Light text in input */
+            border-radius: 5px;
+            padding: 12px;
+            font-size: 1em;
+            margin-bottom: 15px;
+        }
+
+        .form-control:focus {
+            border-color: #007A33; /* Green focus border */
+            box-shadow: 0 0 5px rgba(0, 122, 51, 0.5);
+        }
+
+        .btn-primary {
+            background-color: #007A33;
+            border-color: #007A33;
+            font-weight: bold;
+            padding: 12px 25px;
+            font-size: 1.1em;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background-color: #005f27; /* Darker green on hover */
+            border-color: #005f27;
+        }
+
+        .alert-info {
+            background-color: #28a745; /* Light green */
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .footer {
+            background: linear-gradient(to right, #003366, #007A33); /* Deep blue to green gradient */
+            color: #e0e0e0; /* Light gray text */
+            padding: 20px;
+            text-align: center;
+        }
+
+        .footer p {
+            margin: 0;
+           
+        }
+
+        /* Media Queries for Responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                margin-top: 20px;
+            }
+
+            .btn-primary {
+                font-size: 1em;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .form-group label {
+                font-size: 1em;
+            }
+        }
+    </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">Stock Trading App</a>
-        <div class="collapse navbar-collapse">
-            <ul class="navbar-nav mr-auto">
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <a class="navbar-brand" href="#">SENM Trading</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Home</a>
                 </li>
@@ -21,8 +139,11 @@
         </div>
     </nav>
 
+    <!-- Main Content -->
     <div class="container mt-5">
-        <h1 class="mt-4">Add Stock</h1>
+
+        <!-- Page Title -->
+        <h1>Add New Stock</h1>
 
         <!-- Flash Messages for Success/Error -->
         {% with messages = get_flashed_messages(with_categories=True) %}
@@ -57,18 +178,21 @@
                 {{ form.current_price.label }}
                 {{ form.current_price(class="form-control", step="0.01", required=True) }}
             </div>
-        
+
             <button type="submit" class="btn btn-primary">Add Stock</button>
         </form>        
     </div>
 
-    <footer class="bg-light text-center py-3">
-        <p>&copy; 2024 Stock Trading App. All rights reserved.</p>
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2024 SENM Trading. All Rights Reserved.</p>
+        <p>IFT 401 - Created by Sam Faivre, Nolan Klein, Esther Oyekola, Mulki Husein.</p>
     </footer>
 
+    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
 </body>
 </html>
-

@@ -22,7 +22,7 @@ html, body {
 
 /* Footer stays at the bottom */
 footer {
-    background: linear-gradient(to right, #007A33, #003366); /* Same gradient as before */
+    background: linear-gradient(to right, #007A33, #003366); /* Gradient footer */
     color: #ffffff; /* White text */
     text-align: center; /* Center the text */
     padding: 15px 0; /* Padding for spacing */
@@ -32,23 +32,23 @@ footer {
     width: 100%;
 }
 
-
 /* Navbar Styles */
-.navbar {
+.navbar-custom {
     background: linear-gradient(to right, #003366, #007A33); /* Gradient navbar */
 }
 
-.navbar .navbar-brand {
-    color: #28A745 !important; /* Green branding text */
+.navbar-custom .navbar-brand {
+    color: #ffffff !important; /* White branding text */
     font-weight: bold;
+    font-size: 1.8rem; /* Larger font for brand */
 }
 
-.navbar .nav-link {
+.navbar-custom .navbar-nav .nav-link {
     color: #ffffff !important; /* White text for links */
-    transition: color 0.3s ease; /* Smooth transition for hover */
+    transition: color 0.3s ease;
 }
 
-.navbar .nav-link:hover {
+.navbar-custom .navbar-nav .nav-link:hover {
     color: #28A745 !important; /* Green hover effect */
 }
 
@@ -69,20 +69,15 @@ h2 {
     padding-bottom: 5px; /* Spacing under text */
 }
 
-/* Eastern Time Display */
-#current-time {
-    font-size: 48px;
-    font-weight: bold;
-    color: black; /* Default color for the clock */
-    margin: 20px auto;
-    text-align: center;
-}
-
-/* Buttons */
+/* Button Styles */
 .btn-primary {
     background-color: #007A33; /* Deep green buttons */
     border: none;
     transition: background-color 0.3s ease;
+    display: inline-block;
+    margin: 0 auto;
+    text-align: center;
+    width: 200px; /* Consistent button size */
 }
 
 .btn-primary:hover {
@@ -128,19 +123,6 @@ h2 {
     background-color: #d2e5f8; /* Alternate light blue rows */
 }
 
-/* Footer Styles */
-footer {
-    background: linear-gradient(to right, #007A33, #003366); /* Gradient footer */
-    color: #ffffff; /* White text */
-    padding: 20px;
-    text-align: center;
-    font-size: 0.9em; /* Slightly smaller font */
-}
-
-footer p {
-    margin: 0;
-}
-
 /* Flash Messages */
 .alert-info {
     background-color: #007A33; /* Green background for info alerts */
@@ -149,9 +131,17 @@ footer p {
     text-align: center;
 }
 
+/* Centering the 'Add Stock' Button */
+.center-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
-    .navbar {
+    .navbar-custom {
         text-align: center;
     }
 
@@ -166,5 +156,9 @@ footer p {
     .table th,
     .table td {
         font-size: 0.85em; /* Adjust font size for smaller screens */
+    }
+
+    .btn-primary {
+        width: 150px; /* Slightly smaller buttons on small screens */
     }
 }

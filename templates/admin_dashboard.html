@@ -2,79 +2,153 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script>
-        let isGreen = true;
 
-        // Function to get Eastern Time in 12-hour format and display it
-        function displayEasternTime() {
-            const easternOffset = -5;  // UTC offset for Eastern Time (without Daylight Saving Time)
-            const now = new Date();
-            const utc = now.getTime() + now.getTimezoneOffset() * 60000;  // Get UTC time in milliseconds
-            const easternTime = new Date(utc + (3600000 * easternOffset)); // Convert UTC to Eastern Time
-
-            // Get hours, minutes, and seconds
-            let hours = easternTime.getHours();
-            let minutes = easternTime.getMinutes();
-            let seconds = easternTime.getSeconds();
-
-            // Determine AM or PM suffix
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-
-            // Convert to 12-hour format
-            hours = hours % 12;
-            hours = hours ? hours : 12; // If hours is 0, make it 12
-
-            // Add leading zeroes if necessary
-            minutes = minutes < 10 ? '0' + minutes : minutes;
-            seconds = seconds < 10 ? '0' + seconds : seconds;
-
-            // Format time as HH:MM:SS AM/PM
-            const timeString = hours + ':' + minutes + ':' + seconds + ' ' + ampm;
-
-            // Display the time on the page
-            const timeElement = document.getElementById('current-time');
-            timeElement.innerHTML = timeString;
-
-            // Set market hours (9:30 AM to 4:00 PM Eastern Time)
-            const marketOpenHour = 9;
-            const marketOpenMinute = 30;
-            const marketCloseHour = 16;
-
-            // Check if current time is within market hours
-            if ((easternTime.getHours() > marketOpenHour || 
-                 (easternTime.getHours() === marketOpenHour && easternTime.getMinutes() >= marketOpenMinute)) && 
-                 easternTime.getHours() < marketCloseHour) {
-                // If within market hours, toggle color between green and red
-                if (isGreen) {
-                    timeElement.style.color = 'green';
-                } else {
-                    timeElement.style.color = 'red';
-                }
-                isGreen = !isGreen; // Flip the color for the next update
-            } else {
-                // If outside market hours, set color to black
-                timeElement.style.color = 'black';
-            }
+    <style>
+        /* Custom Dark Mode CSS */
+        body {
+            background-color: #1f1f1f; /* Dark background */
+            font-family: 'Arial', sans-serif;
+            color: #e0e0e0; /* Light gray text for readability */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh; /* Ensures the body stretches to full screen height */
         }
 
-        // Set the clock on page load and update it every second
-        window.onload = function() {
-            displayEasternTime();  // Display the current time when the page loads
-            setInterval(displayEasternTime, 1000); // Update the time every second
-        };
-    </script>
+        .navbar {
+            background: linear-gradient(to right, #003366, #007A33); /* Deep blue to deep green gradient */
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .navbar-nav .nav-link {
+            color: #f8f9fa !important;
+            font-size: 1.1em;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #28a745 !important; /* Light green on hover */
+        }
+
+        .container {
+            margin-top: 30px;
+            flex-grow: 1; /* Allow the container to grow and push footer down */
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #ffffff; /* White text for titles */
+        }
+
+        /* Alternating card colors */
+        .card:nth-child(odd) {
+            background-color: #333333; /* Dark gray for odd cards */
+        }
+
+        .card:nth-child(even) {
+            background-color: #444444; /* Slightly lighter dark gray for even cards */
+        }
+
+        .card-header {
+            color: white;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .card-body {
+            color: white; /* Ensure text inside card body is white */
+        }
+
+        .table th, .table td {
+            text-align: center;
+            vertical-align: middle;
+            color: white; /* White text for table content */
+        }
+
+        .btn {
+            font-weight: bold;
+        }
+
+        footer {
+            background: linear-gradient(to right, #003366, #007A33); /* Deep blue to green gradient */
+            color: #e0e0e0; /* Light gray text */
+            padding: 20px;
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        footer p {
+            margin: 0;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .btn-primary {
+            background-color: #28a745; /* Light green for buttons */
+        }
+
+        .btn-primary:hover {
+            background-color: #218838; /* Darker green on hover */
+        }
+
+        .btn-danger {
+            background-color: #dc3545; /* Red for dangerous actions */
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333; /* Darker red on hover */
+        }
+
+        /* Flash messages */
+        .alert-info {
+            background-color: #007A33; /* Green background for flash messages */
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* Media Queries for Responsiveness */
+        @media (max-width: 768px) {
+            .navbar-nav {
+                text-align: center;
+                margin-top: 10px;
+            }
+
+            .page-header {
+                font-size: 1.8em;
+            }
+
+            .table th, .table td {
+                font-size: 0.9em;
+            }
+
+            .card {
+                margin-top: 20px;
+            }
+        }
+    </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">Stock Trading App</a>
-        <div class="collapse navbar-collapse">
-            <ul class="navbar-nav mr-auto">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <a class="navbar-brand" href="#">SENM Trading</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+                    <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Home</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
@@ -83,100 +157,103 @@
         </div>
     </nav>
 
-    <div class="container mt-5">
-        <h1>Admin Dashboard</h1>
-        
-        <!-- Display Current Eastern Time -->
-        <h2 class="mt-5 text-center">Stock Market Hours (Eastern Time)</h2>
-        <div class="d-flex justify-content-center">
-            <div id="current-time" style="font-size: 48px; font-weight: bold; text-align: center;">
-                <!-- The time will be displayed here -->
+    <!-- Main Content -->
+    <div class="container">
+
+        <!-- Page Title -->
+        <div class="page-header">
+            <h1>Admin Dashboard</h1>
+        </div>
+
+        <!-- Manage Stocks Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                Manage Stocks
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <a href="{{ url_for('add_stock') }}" class="btn btn-primary btn-lg">Add New Stock</a>
+                </div>
+                <div class="table-container">
+                    <table class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Company Name</th>
+                                <th>Ticker</th>
+                                <th>Initial Price</th>
+                                <th>Current Price</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stock in stocks %}
+                            <tr>
+                                <td>{{ stock.company_name }}</td>
+                                <td>{{ stock.ticker }}</td>
+                                <td>${{ stock.initial_price }}</td>
+                                <td>${{ stock.current_price }}</td>
+                                <td>
+                                    <form action="{{ url_for('remove_stock', stock_id=stock.stock_id) }}" method="POST" onsubmit="return confirm('Are you sure you want to remove this stock?');">
+                                        <button type="submit" class="btn btn-danger">Remove</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <h2 class="mt-5">Manage Stocks</h2>
-        <a href="{{ url_for('add_stock') }}" class="btn btn-primary mb-3">Add Stock</a>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Company Name</th>
-                    <th>Ticker</th>
-                    <th>Initial Price</th>
-                    <th>Current Price</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for stock in stocks %}
-                <tr>
-                    <td>{{ stock.company_name }}</td>
-                    <td>{{ stock.ticker }}</td>
-                    <td>${{ stock.initial_price }}</td>
-                    <td>${{ stock.current_price }}</td>
-                    <td>
-                        <form action="{{ url_for('remove_stock', stock_id=stock.stock_id) }}" method="POST" onsubmit="return confirm('Are you sure you want to remove this stock?');">
-                            <button type="submit" class="btn btn-danger">Remove</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <h2 class="mt-5">User Accounts</h2>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Username</th>
-                    <th>Email</th>
-                    <th>Balance</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user in users %}
-                <tr>
-                    <td>{{ user.username }}</td>
-                    <td>{{ user.email }}</td>
-                    <td>${{ user.balance }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <h2 class="mt-5">Transaction History</h2>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>User</th>
-                    <th>Stock</th>
-                    <th>Quantity</th>
-                    <th>Price</th>
-                    <th>Transaction Type</th>
-                    <th>Timestamp</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for transaction in transactions %}
-                <tr>
-                    <td>{{ transaction.user.username }}</td>
-                    <td>{{ transaction.stock.company_name }}</td>
-                    <td>{{ transaction.quantity }}</td>
-                    <td>${{ transaction.price }}</td>
-                    <td>{{ transaction.transaction_type }}</td>
-                    <td>{{ transaction.timestamp }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        {% if get_flashed_messages() %}
-            <div class="mt-3">
-                {% for message in get_flashed_messages() %}
-                    <div class="alert alert-info">{{ message }}</div>
-                {% endfor %}
+        <!-- User Accounts Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                User Accounts
             </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>${{ user.balance }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% if get_flashed_messages() %}
+        <div class="alert alert-info mt-3">
+            {% for message in get_flashed_messages() %}
+            {{ message }}
+            {% endfor %}
+        </div>
         {% endif %}
     </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 SENM Trading. All Rights Reserved.</p>
+        <p>IFT 401 - Created by Sam Faivre, Nolan Klein, Esther Oyekola, Mulki Husein.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
 </body>
 </html>

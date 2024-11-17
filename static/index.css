@@ -1,36 +1,15 @@
 /* General Body Styles */
 body {
-    background-color: #739dd7; /* Light grey background */
-    color: #2e2e2e; /* Dark slate grey text */
+    background-color: #000000; /* Black background */
+    color: #ffffff; /* White text */
     font-family: Arial, sans-serif; /* Clean font */
 }
 
-/* Ensure the body and html take up the full height */
-html, body {
-    height: 100%;
-    margin: 0; /* Remove default margin */
-    display: flex;
-    flex-direction: column; /* Stack elements vertically */
-}
-
-/* Main content area to push the footer to the bottom */
+/* Container to push footer down */
 .container {
-    flex: 1; /* Makes the container take up available space */
-    padding: 20px; /* Add some padding */
+    flex: 1;
+    padding: 20px;
 }
-
-/* Footer stays at the bottom */
-footer {
-    background: linear-gradient(to right, #007A33, #003366); /* Same gradient as before */
-    color: #ffffff; /* White text */
-    text-align: center; /* Center the text */
-    padding: 15px 0; /* Padding for spacing */
-    font-size: 0.9em; /* Slightly smaller font */
-    position: relative; /* Ensures it doesn't overlap content */
-    bottom: 0;
-    width: 100%;
-}
-
 
 /* Navbar Styles */
 .navbar {
@@ -38,135 +17,71 @@ footer {
 }
 
 .navbar .navbar-brand {
-    color: #28A745 !important; /* Money green color for brand text */
-    font-weight: bold; /* Optionally, make it bold to stand out */
+    color: #28A745 !important; /* Money green color for brand */
+    font-weight: bold;
 }
 
 .navbar .nav-link {
-    color: #ffffff !important; /* White text for other navbar items */
-    transition: color 0.3s ease; /* Smooth transition for hover effect */
+    color: #ffffff !important; /* White text for navbar items */
+    transition: color 0.3s ease;
 }
 
 .navbar .nav-link:hover {
-    color: #28A745 !important; /* Money green color on hover for links */
-}
-
-
-/* Alert Styles */
-.alert-warning {
-    background-color: #D9534F; /* Red alert background */
-    color: #ffffff; /* White text for alerts */
+    color: #28A745 !important; /* Hover effect */
 }
 
 /* Button Styles */
 .btn-primary {
-    background-color: #007A33; /* Deep green for primary buttons */
-    border: none; /* Remove border */
+    background-color: #007A33; /* Green for Submit buttons */
+    border: none;
 }
 
 .btn-primary:hover {
     background-color: #005A27; /* Darker green on hover */
 }
 
-.btn-danger {
-    background-color: #D9534F; /* Red for danger buttons */
-}
-
-/* Card Styles for Stock Information */
-.card {
-    margin: 15px 0; /* Spacing between cards */
+/* Form Styles */
+.form-control {
+    background-color: #e0ebf0; /* Light background for inputs */
+    color: #333; /* Dark text */
     border: 1px solid #007A33; /* Green border */
+    border-radius: 5px;
+    padding: 10px;
+    font-size: 1rem;
 }
 
-.card-header {
-    background-color: #007A33; /* Deep green header */
+.form-label {
+    color: #28A745; /* Money green color for labels */
+}
+
+.form-group {
+    margin-bottom: 1.5em;
+}
+
+.text-danger {
+    font-size: 0.875em;
+}
+
+/* Alert Styles */
+.alert-info {
+    background-color: #007A33; /* Green alert background */
     color: #ffffff; /* White text */
 }
 
-.card-body {
-    background-color: #ffffff; /* White body for cards */
-}
-
-/* Spacing Adjustments */
-h4:contains("Funds") {
-    margin-top: 25px; /* Add 25px of spacing above "Funds" section */
-}
-
-h4:contains("Your Stocks") {
-    margin-top: 50px; /* Add 50px of spacing above "Your Stocks" section */
-}
-
-/* Spacing Adjustments for Specific Sections */
-#funds-section {
-    margin-top: 25px; /* Add 25px of spacing above "Funds" section */
-}
-
-#your-stocks {
-    margin-top: 50px; /* Add 50px of spacing above "Your Stocks" section */
-}
-
-/*Spacing above h5*/
-h5 {
-    margin-top: 5px;
-}
-
-/* Table Styles */
-.table {
-    background-color: #e0ebf0; /* White background for the table */
-    border-radius: 8px; /* Rounded corners */
-    overflow: hidden; /* Prevents corners from showing */
-    border-collapse: separate; /* Ensures rounded corners work */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
-    margin-bottom: 100px;
-}
-
-.table th,
-.table td {
-    padding: 12px; /* Add some padding for space */
-    vertical-align: middle; /* Center text vertically */
-    color: #2e2e2e; /* dark grey text in graph to easily see */
-    border: 1px solid #007A33; /* Border with deep green */
-}
-
-.table th {
-    background-color: #d1d1d1; /* Light grey header */
-    color: #2e2e2e; /* Dark grey text for headers */
-    font-weight: bold; /* Bold headers */
-    text-align: center; /* Center-align headers */
-}
-
-.table tbody tr:nth-child(even) {
-    background-color: #d2e5f8; /* Light grey for even rows */
-}
-
-.table tbody tr:hover {
-    background-color: #28ae41; /* Slightly darker hover effect */
-    color: #007A33; /* Deep green text on hover */
-}
-
-.table tbody td {
-    text-align: center; /* Center-align table data */
-    font-size: 0.95em; /* Slightly smaller font for data */
-}
-
-/* Footer Styles */
 /* Footer Styles */
 footer {
-    background: linear-gradient(to right, #007A33, #003366); /* Same gradient as navbar */
-    color: #ffffff; /* White text in footer */
-    padding: 15px 0; /* Add some padding for spacing */
-    text-align: center; /* Center-align text */
-    font-size: 0.9em; /* Slightly smaller font for footer text */
+    background: linear-gradient(to right, #007A33, #003366);
+    color: #ffffff;
+    padding: 15px 0;
+    text-align: center;
+    font-size: 0.9em;
 }
 
 footer p {
-    margin: 0; /* Remove default margin for consistent spacing */
+    margin: 0;
 }
 
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .navbar {
-        text-align: center; /* Center items on mobile */
-    }
+/* Spacing Adjustments */
+h1, h4, h5 {
+    margin-top: 25px;
 }
