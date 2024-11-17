@@ -49,6 +49,14 @@ CREATE TABLE IF NOT EXISTS transactions (
     FOREIGN KEY (stock_id) REFERENCES stocks(stock_id) ON DELETE CASCADE
 );
 
+CREATE TABLE contact_message (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 INSERT INTO stocks (company_name, ticker, initial_price, current_price) VALUES
 ('Apple Inc.', 'AAPL', 150.00, 150.00),
 ('Microsoft Corporation', 'MSFT', 280.00, 280.00),
