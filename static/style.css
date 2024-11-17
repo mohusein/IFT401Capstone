@@ -94,21 +94,38 @@ form .btn:hover {
     margin-bottom: 20px;
 }
 
-/* Bottom Text Styles */
-.bottom {
-    color: #2e2e2e;
-    font-size: 0.9em;
-    text-align: center;
-}
 
-.bottom a {
-    color: #007A33; /* Deep green link */
+
+/* Style for "Register Admin here" link */
+.register-admin-link {
+    color: #ffffff; /* Red color for Register Admin link */
     text-decoration: none;
 }
 
-.bottom a:hover {
-    color: #005A27; /* Darker green on hover */
+.register-admin-link:hover {
+    color: #739dd7; /* Darker red on hover */
 }
+
+/* Style for "Register Customer here" link */
+.register-customer-link {
+    color: #ffffff; /* Deep green color for Register Customer link */
+    text-decoration: none;
+}
+
+.register-customer-link:hover {
+    color: #739dd7; /* Darker green on hover */
+}
+
+/* Style for "Sign In here" link */
+.sign-in-link {
+    color: #739dd7; /* Deep blue color for Sign In link */
+    text-decoration: none;
+}
+
+.sign-in-link:hover {
+    color: #001F4D; /* Darker blue on hover */
+}
+
 
 /* Remove default margin from h1 and h2 */
 h1, h2 {
