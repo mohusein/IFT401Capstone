@@ -5,6 +5,33 @@ body {
     font-family: Arial, sans-serif; /* Clean font */
 }
 
+/* Ensure the body and html take up the full height */
+html, body {
+    height: 100%;
+    margin: 0; /* Remove default margin */
+    display: flex;
+    flex-direction: column; /* Stack elements vertically */
+}
+
+/* Main content area to push the footer to the bottom */
+.container {
+    flex: 1; /* Makes the container take up available space */
+    padding: 20px; /* Add some padding */
+}
+
+/* Footer stays at the bottom */
+footer {
+    background: linear-gradient(to right, #007A33, #003366); /* Same gradient as before */
+    color: #ffffff; /* White text */
+    text-align: center; /* Center the text */
+    padding: 15px 0; /* Padding for spacing */
+    font-size: 0.9em; /* Slightly smaller font */
+    position: relative; /* Ensures it doesn't overlap content */
+    bottom: 0;
+    width: 100%;
+}
+
+
 /* Navbar Styles */
 .navbar {
     background: linear-gradient(to right, #003366, #007A33); /* Gradient navbar */
