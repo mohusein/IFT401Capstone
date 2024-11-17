@@ -1,0 +1,170 @@
+/* General Body Styles */
+body {
+    background-color: #739dd7 !important; /* Light blue background */
+    color: #2e2e2e; /* Dark slate grey text */
+    font-family: Arial, sans-serif; /* Clean and consistent font */
+    padding-bottom: 50px; /* Add space at the bottom for better visuals */
+}
+
+/* Ensure the body and html take up the full height */
+html, body {
+    height: 100%;
+    margin: 0; /* Remove default margin */
+    display: flex;
+    flex-direction: column; /* Stack elements vertically */
+}
+
+/* Main content area to push the footer to the bottom */
+.container {
+    flex: 1; /* Makes the container take up available space */
+    padding: 20px; /* Add some padding */
+}
+
+/* Footer stays at the bottom */
+footer {
+    background: linear-gradient(to right, #007A33, #003366); /* Same gradient as before */
+    color: #ffffff; /* White text */
+    text-align: center; /* Center the text */
+    padding: 15px 0; /* Padding for spacing */
+    font-size: 0.9em; /* Slightly smaller font */
+    position: relative; /* Ensures it doesn't overlap content */
+    bottom: 0;
+    width: 100%;
+}
+
+
+/* Navbar Styles */
+.navbar {
+    background: linear-gradient(to right, #003366, #007A33); /* Gradient navbar */
+}
+
+.navbar .navbar-brand {
+    color: #28A745 !important; /* Green branding text */
+    font-weight: bold;
+}
+
+.navbar .nav-link {
+    color: #ffffff !important; /* White text for links */
+    transition: color 0.3s ease; /* Smooth transition for hover */
+}
+
+.navbar .nav-link:hover {
+    color: #28A745 !important; /* Green hover effect */
+}
+
+/* Page Header */
+h1.text-center {
+    margin-top: 20px;
+    font-size: 2.5em; /* Larger font size for prominence */
+    color: #003366; /* Dark blue for the header */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+/* Section Headers */
+h2 {
+    color: #003366; /* Deep blue headers */
+    margin-top: 40px; /* Space between sections */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    border-bottom: 2px solid #007A33; /* Green underline */
+    padding-bottom: 5px; /* Spacing under text */
+}
+
+/* Eastern Time Display */
+#current-time {
+    font-size: 48px;
+    font-weight: bold;
+    color: black; /* Default color for the clock */
+    margin: 20px auto;
+    text-align: center;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: #007A33; /* Deep green buttons */
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #005A27; /* Darker green on hover */
+}
+
+.btn-danger {
+    background-color: #D9534F; /* Red for danger buttons */
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.btn-danger:hover {
+    background-color: #B52B27; /* Darker red on hover */
+}
+
+/* Table Styles */
+.table {
+    background-color: #e0ebf0; /* Light grey table background */
+    border-radius: 8px; /* Rounded corners */
+    border-collapse: separate;
+    border-spacing: 0; /* Prevent overlapping of borders */
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+.table th,
+.table td {
+    padding: 12px;
+    text-align: center; /* Center-align text */
+    font-size: 0.95em; /* Slightly smaller font */
+    color: #2e2e2e; /* Dark grey text */
+    border: 1px solid #007A33; /* Green borders */
+}
+
+.table th {
+    background-color: #d1d1d1; /* Light grey for headers */
+    color: #2e2e2e; /* Dark grey header text */
+    font-weight: bold;
+}
+
+.table tbody tr:nth-child(even) {
+    background-color: #d2e5f8; /* Alternate light blue rows */
+}
+
+/* Footer Styles */
+footer {
+    background: linear-gradient(to right, #007A33, #003366); /* Gradient footer */
+    color: #ffffff; /* White text */
+    padding: 20px;
+    text-align: center;
+    font-size: 0.9em; /* Slightly smaller font */
+}
+
+footer p {
+    margin: 0;
+}
+
+/* Flash Messages */
+.alert-info {
+    background-color: #007A33; /* Green background for info alerts */
+    color: #ffffff; /* White text */
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .navbar {
+        text-align: center;
+    }
+
+    h1.text-center {
+        font-size: 2em; /* Slightly smaller font size for small screens */
+    }
+
+    h2 {
+        font-size: 1.5em; /* Adjust section headers */
+    }
+
+    .table th,
+    .table td {
+        font-size: 0.85em; /* Adjust font size for smaller screens */
+    }
+}
