@@ -22,12 +22,24 @@ FILL_FORM_MSG = 'Please fill out the form!'
 # Set up Flask application and configuration
 app = Flask(__name__, template_folder='templates')
 app.secret_key = os.urandom(24).hex()
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'password'
-app.config['MYSQL_DB'] = 'geeklogin'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:password@localhost/geeklogin'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+#app.config['MYSQL_HOST'] = 'localhost'
+#app.config['MYSQL_USER'] = 'root'
+#app.config['MYSQL_PASSWORD'] = 'password'
+#app.config['MYSQL_DB'] = 'geeklogin'
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:password@localhost/geeklogin'
+#app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Correct configuration for AWS RDS MySQL
+app.config['MYSQL_HOST'] = 'database-1234.cf2csmogmnx7.us-east-1.rds.amazonaws.com'
+app.config['MYSQL_USER'] = 'root'  # Correct MySQL username
+app.config['MYSQL_PASSWORD'] = 'password'  # Correct MySQL password
+app.config['MYSQL_DB'] = 'geeklogin'  # Correct database name
+
+# MySQL Configuration for AWS RDS
+app.config['SQLALCHEMY_DATABASE_URI'] = (
+    'mysql+pymysql://root:password@database-1234.cf2csmogmnx7.us-east-1.rds.amazonaws.com:3306/geeklogin'
+)
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Optional, to disable modification tracking
 
 # Set up MySQL and SQLAlchemy
 mysql = MySQL(app)
@@ -392,7 +404,7 @@ def transactions():
     flash('You must be logged in to view transactions.', 'warning')
     return redirect(url_for('login'))
 
-market_open = False  # None means "use real market hours"; True = market open, False = market closed FOR TESTING MARKET HOUR FUNCTIONALITY
+market_open = None  # None means "use real market hours"; True = market open, False = market closed FOR TESTING MARKET HOUR FUNCTIONALITY
 
 # Check if the market is open based on real time (market hours 9:30 AM - 4:00 PM ET)
 def is_market_open():
@@ -608,7 +620,7 @@ def update_stock_prices():
             except Exception as e:
                 print(f"Error updating stock prices: {e}")
                 flash('Error updating stock prices. Please try again later.', 'error')
-            time.sleep(300)
+            time.sleep(60)
 
 # New route to fetch current stock prices
 @app.route('/update_prices', methods=['GET'])
